@@ -1,20 +1,65 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectOption } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, ChevronDown, ChevronRight } from "lucide-react";
+import { getCategories, organizeCategoriesHierarchy } from "@/services/categoryService";
 
 export function FilterToolbar({ onFilterChange }) {
   const [filters, setFilters] = useState({
     keyword: "",
     category: "",
     sortBy: "time",
-    newMinutes: 60,
+    newMinutes: '',
   });
+
+  const [categories, setCategories] = useState([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getCategories();
+        if (response && response.success) {
+          const hierarchicalCategories = organizeCategoriesHierarchy(response.data);
+          setCategories(hierarchicalCategories);
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleChange = (field, value) => {
     const newFilters = { ...filters, [field]: value };
     setFilters(newFilters);
     onFilterChange(newFilters);
+  };
+
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    handleChange("category", category.category_name);
+    setIsDropdownOpen(false);
+  };
+
+  const handleClearCategory = () => {
+    setSelectedCategory(null);
+    handleChange("category", "");
+    setIsDropdownOpen(false);
   };
 
   return (
@@ -36,27 +81,42 @@ export function FilterToolbar({ onFilterChange }) {
             </div>
           </div>
 
-          {/* Category */}
-          <div className="flex-1 min-w-[200px]">
+          {/* Category Dropdown */}
+          <div className="flex-1 min-w-[200px]" ref={dropdownRef}>
             <label className="text-sm font-medium mb-1.5 block">Danh mục</label>
-            <Select
-              value={filters.category}
-              onChange={(e) => handleChange("category", e.target.value)}
-            >
-              <SelectOption value="">Tất cả danh mục</SelectOption>
-              <SelectOption value="1">Danh mục 1</SelectOption>
-              <SelectOption value="1.1" className="pl-6">
-                → Danh mục 1.1
-              </SelectOption>
-              <SelectOption value="1.2" className="pl-6">
-                → Danh mục 1.2
-              </SelectOption>
-              <SelectOption value="2">Danh mục 2</SelectOption>
-              <SelectOption value="2.1" className="pl-6">
-                → Danh mục 2.1
-              </SelectOption>
-              <SelectOption value="3">Danh mục 3</SelectOption>
-            </Select>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <span className={selectedCategory ? "" : "text-muted-foreground"}>
+                  {selectedCategory ? selectedCategory.category_name : "Tất cả danh mục"}
+                </span>
+                <ChevronDown className="h-4 w-4 opacity-50" />
+              </button>
+
+              {isDropdownOpen && (
+                <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg">
+                  <div className="p-1">
+                    <button
+                      onClick={handleClearCategory}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-sm"
+                    >
+                      Tất cả danh mục
+                    </button>
+                    {categories.map((parentCategory) => (
+                      <CategoryItem
+                        key={parentCategory.category_id}
+                        category={parentCategory}
+                        onSelect={handleCategorySelect}
+                        selectedId={selectedCategory?.category_id}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Sort */}
@@ -88,6 +148,46 @@ export function FilterToolbar({ onFilterChange }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function CategoryItem({ category, onSelect, selectedId, level = 0 }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const hasChildren = category.children && category.children.length > 0;
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <button
+        onClick={() => onSelect(category)}
+        className={`w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-sm flex items-center justify-between ${
+          selectedId === category.category_id ? "bg-accent" : ""
+        }`}
+        style={{ paddingLeft: `${12 + level * 16}px` }}
+      >
+        <span>{category.category_name}</span>
+        {hasChildren && <ChevronRight className="h-4 w-4 opacity-50" />}
+      </button>
+
+      {hasChildren && isHovered && (
+        <div className="absolute left-full top-0 ml-1 w-full rounded-md border bg-popover shadow-lg z-50">
+          <div className="p-1">
+            {category.children.map((child) => (
+              <CategoryItem
+                key={child.category_id}
+                category={child}
+                onSelect={onSelect}
+                selectedId={selectedId}
+                level={level + 1}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, Gavel, ArrowRight } from "lucide-react";
+import { Clock, Gavel, ArrowRight, CircleDollarSign } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice, calculateTimeRemaining } from "@/services/productService";
 
@@ -70,20 +70,26 @@ export function TopStatsSection({ endingSoon, mostBidded, highestPrice, loading 
                       key={product.product_id}
                       className="flex justify-between items-start p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
                     >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {product.product_name}
-                        </p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Clock className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">
-                            {timeLeft.text}
-                          </span>
+                        <div className="flex-1 min-w-0">
+                        {/* Hàng chứa Name và Time */}
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium truncate">
+                            {product.product_name}
+                            </p>
+                            
+                            <div className="flex items-center gap-1 shrink-0 text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span className="text-xs whitespace-nowrap">
+                                {timeLeft.text}
+                            </span>
+                            </div>
                         </div>
+
+                        {/* Giá tiền nằm dòng dưới */}
                         <p className="text-sm font-semibold text-primary mt-1">
-                          {formatPrice(product.current_price)}
+                            {formatPrice(product.current_price)}
                         </p>
-                      </div>
+                        </div>
                     </div>
                   );
                 })
@@ -92,10 +98,6 @@ export function TopStatsSection({ endingSoon, mostBidded, highestPrice, loading 
                   Không có sản phẩm
                 </p>
               )}
-              <button className="w-full flex items-center justify-center gap-1 text-sm text-primary hover:underline mt-2">
-                <span>Xem tất cả</span>
-                <ArrowRight className="h-3 w-3" />
-              </button>
             </div>
           </CardContent>
         </Card>
@@ -117,19 +119,25 @@ export function TopStatsSection({ endingSoon, mostBidded, highestPrice, loading 
                     className="flex justify-between items-start p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {product.product_name}
-                      </p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Gavel className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">
-                          {product.bid_count || 0} lượt
-                        </span>
-                      </div>
-                      <p className="text-sm font-semibold text-primary mt-1">
-                        {formatPrice(product.current_price)}
-                      </p>
-                    </div>
+                        {/* Hàng chứa Tên và Số lượt đấu giá */}
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium truncate">
+                            {product.product_name}
+                            </p>
+                            
+                            <div className="flex items-center gap-1 shrink-0 text-muted-foreground">
+                            <Gavel className="h-3 w-3" />
+                            <span className="text-xs whitespace-nowrap">
+                                {product.bid_count || 0} lượt
+                            </span>
+                            </div>
+                        </div>
+
+                        {/* Giá tiền nằm dòng dưới */}
+                        <p className="text-sm font-semibold text-primary mt-1">
+                            {formatPrice(product.current_price)}
+                        </p>
+                        </div>
                   </div>
                 ))
               ) : (
@@ -137,10 +145,6 @@ export function TopStatsSection({ endingSoon, mostBidded, highestPrice, loading 
                   Không có sản phẩm
                 </p>
               )}
-              <button className="w-full flex items-center justify-center gap-1 text-sm text-primary hover:underline mt-2">
-                <span>Xem tất cả</span>
-                <ArrowRight className="h-3 w-3" />
-              </button>
             </div>
           </CardContent>
         </Card>
@@ -148,7 +152,8 @@ export function TopStatsSection({ endingSoon, mostBidded, highestPrice, loading 
         {/* Highest Price */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <CircleDollarSign className="h-4 w-4" />
               Top 5 sản phẩm có giá cao nhất
             </CardTitle>
           </CardHeader>
@@ -164,7 +169,7 @@ export function TopStatsSection({ endingSoon, mostBidded, highestPrice, loading 
                       <p className="text-sm font-medium truncate">
                         {product.product_name}
                       </p>
-                      <p className="text-base font-bold text-primary mt-2">
+                      <p className="text-sm font-semibold text-primary mt-1">
                         {formatPrice(product.current_price)}
                       </p>
                     </div>
@@ -175,10 +180,6 @@ export function TopStatsSection({ endingSoon, mostBidded, highestPrice, loading 
                   Không có sản phẩm
                 </p>
               )}
-              <button className="w-full flex items-center justify-center gap-1 text-sm text-primary hover:underline mt-2">
-                <span>Xem tất cả</span>
-                <ArrowRight className="h-3 w-3" />
-              </button>
             </div>
           </CardContent>
         </Card>

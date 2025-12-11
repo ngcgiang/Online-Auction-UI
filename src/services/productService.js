@@ -22,11 +22,9 @@ export const searchProducts = async (params = {}) => {
 // Get products by category
 export const getProductsByCategory = async (params = {}) => {
   const queryParams = new URLSearchParams();
-  
   if (params.category) queryParams.append('category', params.category);
   if (params.page) queryParams.append('page', params.page);
   if (params.pageSize) queryParams.append('pageSize', params.pageSize);
-  
   return apiClient.get(`/api/products?${queryParams.toString()}`);
 };
 
