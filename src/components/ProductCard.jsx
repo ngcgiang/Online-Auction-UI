@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -5,6 +6,8 @@ import { Clock, Gavel, Calendar } from "lucide-react";
 import { formatPrice, calculateTimeRemaining } from "@/services/productService";
 
 export function ProductCard({ product, loading }) {
+  const navigate = useNavigate();
+
   if (loading) {
     return (
       <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -27,12 +30,23 @@ export function ProductCard({ product, loading }) {
   const timeLeft = calculateTimeRemaining(product.end_time);
   const isSold = product.status === "sold" || product.status === "ended";
 
+  const handleClick = () => {
+    navigate(`/product/${product.product_id}`);
+  };
+
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
+    <Card 
+      className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+      onClick={handleClick}
+    >
       {/* Image Container */}
       <div className="relative bg-muted h-48 overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-          <span className="text-sm">No Image</span>
+          <img
+            src={product.avatar || "/placeholder-image.png"}
+            alt={product.product_name}
+            className="object-cover w-full h-full group-hover:scale-105 transition-transform"
+          />
         </div>
         
         {/* Status Badge */}
@@ -42,15 +56,6 @@ export function ProductCard({ product, loading }) {
             className="absolute top-2 right-2 z-10"
           >
             Đã bán
-          </Badge>
-        )}
-        
-        {product.is_new && (
-          <Badge
-            variant="default"
-            className="absolute top-2 left-2 z-10"
-          >
-            Mới
           </Badge>
         )}
       </div>

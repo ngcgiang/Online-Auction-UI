@@ -63,6 +63,16 @@ export const appendProductDescription = async (productId, content) => {
   return apiClient.post(`/api/products/${productId}/updates`, { content });
 };
 
+// Get product questions and answers
+export const getProductQnA = async (productId) => {
+  return apiClient.get(`/api/qa/${productId}`);
+};
+
+// Get 5 related products based on category
+export const getRelatedProducts = async (productId) => {
+    return apiClient.get(`/api/products/related/${productId}`);
+};
+
 /**
  * Utility function to format product data from API response
  */
