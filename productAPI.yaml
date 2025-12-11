@@ -1,0 +1,388 @@
+ # ==================== PRODUCTS ====================
+  /api/products/search:
+    get:
+      tags:
+        - Products
+      summary: Tìm kiếm sản phẩm nâng cao
+      description: |
+        Full-text search với filters và pagination.
+        
+        **Features:**
+        - Full-text search trên product_name (Vietnamese accent-insensitive)
+        - Filter theo category
+        - Sort theo: time (mới nhất), price (giá), bid (nhiều bid nhất)
+        - Pagination
+      operationId: searchProducts
+      parameters:
+        - name: keyword
+          in: query
+          description: Từ khóa tìm kiếm
+          schema:
+            type: string
+            example: "iPhone"
+        - name: category
+          in: query
+          description: ID danh mục (optional)
+          schema:
+            type: integer
+            example: 5
+        - name: page
+          in: query
+          description: Số trang (mặc định 1)
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: pageSize
+          in: query
+          description: Số item mỗi trang (mặc định 12)
+          schema:
+            type: integer
+            default: 12
+            minimum: 1
+            maximum: 100
+        - name: sortBy
+          in: query
+          description: Sắp xếp theo
+          schema:
+            type: string
+            enum: [time, price, bid]
+            default: time
+        - name: newMinutes
+          in: query
+          description: Số phút để coi là sản phẩm mới (mặc định 60)
+          schema:
+            type: integer
+            default: 60
+      responses:
+        '200':
+          description: Danh sách sản phẩm
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Products retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  searchCriteria:
+                    type: object
+                  pagination:
+                    $ref: '#/components/schemas/PaginationInfo'
+
+  /api/products:
+    get:
+      tags:
+        - Products
+      summary: Lấy danh sách sản phẩm theo danh mục
+      description: Lấy sản phẩm với filter theo category và pagination
+      operationId: getProductsByCategory
+      parameters:
+        - name: category
+          in: query
+          description: ID danh mục (optional)
+          schema:
+            type: integer
+            example: 1
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 12
+      responses:
+        '200':
+          description: Danh sách sản phẩm
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationInfo'
+        '404':
+          description: Category không tồn tại
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Products
+      summary: Tạo sản phẩm đấu giá mới
+      description: |
+        Tạo sản phẩm đấu giá mới (yêu cầu role `seller`).
+        
+        **Lưu ý:**
+        - User phải có role `seller` hoặc `admin`
+        - Seller phải có permission hợp lệ (trong 7 ngày kể từ upgrade_at)
+        - end_time phải sau start_time
+      operationId: createProduct
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+      responses:
+        '201':
+          description: Tạo sản phẩm thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Product created successfully"
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '400':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Không có quyền tạo sản phẩm
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/products/top-value:
+    get:
+      tags:
+        - Products
+      summary: Top sản phẩm giá cao nhất
+      description: Lấy danh sách sản phẩm có giá hiện tại cao nhất
+      operationId: getTopValueProducts
+      responses:
+        '200':
+          description: Danh sách top products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+  /api/products/top-least-time-left:
+    get:
+      tags:
+        - Products
+      summary: Top sản phẩm sắp hết hạn
+      description: Lấy danh sách sản phẩm có thời gian còn lại ít nhất
+      operationId: getTopLeastTimeLeft
+      responses:
+        '200':
+          description: Danh sách top products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+  /api/products/top-most-bidded:
+    get:
+      tags:
+        - Products
+      summary: Top sản phẩm nhiều lượt đấu giá nhất
+      description: Lấy danh sách sản phẩm có số lượt bid nhiều nhất
+      operationId: getTopMostBidded
+      responses:
+        '200':
+          description: Danh sách top products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+  /api/products/{product_id}:
+    get:
+      tags:
+        - Products
+      summary: Lấy thông tin sản phẩm theo ID
+      description: Lấy thông tin cơ bản của sản phẩm
+      operationId: getProductById
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          description: ID sản phẩm
+          schema:
+            type: integer
+            example: 101
+      responses:
+        '200':
+          description: Thông tin sản phẩm
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '404':
+          description: Sản phẩm không tồn tại
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/products/{product_id}/details:
+    get:
+      tags:
+        - Products
+      summary: Lấy thông tin chi tiết sản phẩm
+      description: |
+        Lấy thông tin đầy đủ bao gồm:
+        - Seller info
+        - Winner info (nếu có)
+        - Category
+        - Images
+        - Description history (append-only)
+        - Bid count
+      operationId: getProductDetails
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 101
+      responses:
+        '200':
+          description: Thông tin chi tiết sản phẩm
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/ProductDetails'
+        '404':
+          description: Sản phẩm không tồn tại
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/products/{product_id}/updates:
+    post:
+      tags:
+        - Products
+      summary: Thêm mô tả sản phẩm (Append-only)
+      description: |
+        Thêm description update mới vào lịch sử mô tả sản phẩm.
+        
+        **Đặc điểm:**
+        - Append-only: Không xóa/sửa description cũ
+        - Chỉ seller (owner) mới được thêm
+        - HTML được sanitize để chống XSS
+        - Tạo audit trail cho mọi thay đổi
+      operationId: appendProductDescription
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                  example: "Thêm thông tin: Bảo hành quốc tế 24 tháng"
+      responses:
+        '201':
+          description: Thêm description thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      des_id:
+                        type: integer
+                      product_id:
+                        type: integer
+                      description:
+                        type: string
+                      created_at:
+                        type: string
+                        format: date-time
+        '401':
+          description: Chưa đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Chỉ owner mới có quyền thêm
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Sản phẩm không tồn tại
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
