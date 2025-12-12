@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Heart, Star, Clock, User, Gavel, ArrowLeft, Send } from "lucide-react";
+import { Heart, Star, Clock, User, Gavel, ArrowLeft, Send, AlertCircle, CheckCircle2 } from "lucide-react";
 import { formatPrice, getProductDetails, getProductQnA, getRelatedProducts } from "@/services/productService";
 import { getBidsByProductId } from "@/services/bidService";
 import { QnAThread } from "@/components/QnAThread";
+import { useProductSocket } from "@/hooks/useProductSocket";
+import { formatTimeRemaining } from "@/lib/socket";
 
 export function ProductDetail() {
   const { productId } = useParams();
@@ -26,6 +28,9 @@ export function ProductDetail() {
   const [relatedLoading, setRelatedLoading] = useState(true);
   const [bidHistory, setBidHistory] = useState([]);
   const [bidLoading, setBidLoading] = useState(true);
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [socketError, setSocketError] = useState(null);
+  const [timeRemaining, setTimeRemaining] = useState("--:--:--");
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -51,6 +56,58 @@ export function ProductDetail() {
 
     fetchProduct();
   }, [productId]);
+
+  // Socket.io integration for real-time price and bid updates
+  useProductSocket(
+    productId,
+    // onPriceUpdate callback
+    (data) => {
+      if (data) {
+        setProduct((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            current_price: data.currentPrice,
+            bid_count: data.bidCount || prev.bid_count,
+            winner: data.winner || prev.winner,
+            end_time: data.endTime || prev.end_time,
+          };
+        });
+
+        // Update time remaining if end_time is provided
+        if (data.endTime) {
+          setTimeRemaining(formatTimeRemaining(data.endTime));
+        }
+      }
+    },
+    // onBidHistoryUpdate callback
+    (bids) => {
+      if (Array.isArray(bids)) {
+        setBidHistory(bids);
+      }
+    },
+    // onConnectionEstablished callback
+    () => {
+      setSocketConnected(true);
+      setSocketError(null);
+    },
+    // onConnectionError callback
+    (error) => {
+      setSocketError(error?.message || "Lỗi kết nối socket");
+      setSocketConnected(false);
+    }
+  );
+
+  // Timer to update time remaining every second
+  useEffect(() => {
+    if (!product?.end_time) return;
+
+    const timer = setInterval(() => {
+      setTimeRemaining(formatTimeRemaining(product.end_time));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [product?.end_time]);
 
   useEffect(() => {
     const fetchQnA = async () => {
@@ -363,6 +420,13 @@ export function ProductDetail() {
               <p className="text-4xl font-bold text-primary">
                 {formatPrice(product.current_price)}
               </p>
+              {/* Time Remaining */}
+              <div className="mt-3 flex items-center gap-2 text-sm text-amber-600">
+                <Clock className="h-4 w-4" />
+                <span className="font-medium">
+                  {timeRemaining === "--:--:--" ? "Tính toán..." : timeRemaining}
+                </span>
+              </div>
             </div>
 
             {/* Highest Bidder */}
@@ -470,8 +534,22 @@ export function ProductDetail() {
           {/* RIGHT COLUMN: Transaction History */}
           <div className="lg:col-span-3">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-base">Lịch sử giao dịch</CardTitle>
+                {/* Socket Connection Status */}
+                <div className="flex items-center gap-1">
+                  {socketConnected ? (
+                    <div className="flex items-center gap-1 text-xs text-emerald-600">
+                      <CheckCircle2 className="h-3 w-3" />
+                      <span>Live</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-xs text-amber-600">
+                      <AlertCircle className="h-3 w-3" />
+                      <span>Offline</span>
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
