@@ -9,13 +9,27 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor
+// Flag to prevent infinite refresh loops
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+// Request interceptor - Attach access token to all requests
 apiClient.interceptors.request.use(
   (config) => {
-    // Add auth token if exists
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const accessToken = localStorage.getItem('access_token');
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
   },
@@ -24,24 +38,82 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor
+// Response interceptor - Handle 401 with auto-refresh
 apiClient.interceptors.response.use(
   (response) => {
-    // Return the data directly for successful responses
     return response.data;
   },
-  (error) => {
-    // Handle specific error cases
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Handle 401 Unauthorized with token refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      if (isRefreshing) {
+        // Queue the request while refresh is in progress
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return apiClient(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      isRefreshing = true;
+
+      try {
+        const refreshToken = localStorage.getItem('refresh_token');
+
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        // Call refresh token endpoint
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/auth/refresh-token`,
+          { refreshToken }
+        );
+
+        if (response.data?.success && response.data?.data?.accessToken) {
+          const newAccessToken = response.data.data.accessToken;
+          
+          // Update stored token
+          localStorage.setItem('access_token', newAccessToken);
+          
+          // Update original request with new token
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          
+          // Process queued requests with new token
+          processQueue(null, newAccessToken);
+          isRefreshing = false;
+          
+          // Retry original request
+          return apiClient(originalRequest);
+        } else {
+          throw new Error('Failed to refresh token');
+        }
+      } catch (refreshError) {
+        // Refresh failed - clear tokens and redirect to login
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
+        processQueue(refreshError, null);
+        isRefreshing = false;
+        
+        // Redirect to login
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
+    }
+
+    // Handle other error cases
     if (error.response) {
-      // Server responded with error status
       const { status, data } = error.response;
       
       switch (status) {
-        case 401:
-          // Unauthorized - clear token and redirect to login
-          localStorage.removeItem('auth_token');
-          window.location.href = '/login';
-          break;
         case 403:
           console.error('Access forbidden:', data?.message);
           break;
@@ -57,11 +129,9 @@ apiClient.interceptors.response.use(
       
       return Promise.reject(data || error);
     } else if (error.request) {
-      // Request made but no response received
       console.error('Network error: No response from server');
       return Promise.reject({ message: 'Network error. Please check your connection.' });
     } else {
-      // Error in request setup
       console.error('Request error:', error.message);
       return Promise.reject({ message: error.message });
     }

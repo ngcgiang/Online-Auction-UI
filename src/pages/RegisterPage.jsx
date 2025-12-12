@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AuthLayout } from "@/components/AuthLayout";
 import { Mail, Lock, User, MapPin } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { register as registerUser } from "@/services/authService";
 
 const registerSchema = z.object({
   full_name: z.string().min(1, "Tên đầy đủ là bắt buộc"),
@@ -18,6 +20,7 @@ const registerSchema = z.object({
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -42,22 +45,21 @@ export function RegisterPage() {
         address: data.address,
       };
 
-      console.log("Register payload:", payload);
+      const response = await registerUser(payload);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // TODO: Replace with actual API call
-      // const response = await registerUser(payload);
-      // if (response.success) {
-      //   localStorage.setItem("token", response.data.token);
-      //   navigate("/");
-      // }
-
-      console.log("Registration successful");
-      // navigate("/");
+      if (response?.success && response?.data) {
+        const { user, accessToken, refreshToken } = response.data;
+        
+        // Store in Auth context and localStorage
+        login(user, accessToken, refreshToken);
+        
+        // Redirect to home
+        navigate("/");
+      } else {
+        setError(response?.message || "Đăng ký thất bại");
+      }
     } catch (err) {
-      setError("Đăng ký thất bại. Vui lòng thử lại.");
+      setError(err?.message || "Đăng ký thất bại. Vui lòng thử lại.");
       console.error("Register error:", err);
     } finally {
       setIsLoading(false);

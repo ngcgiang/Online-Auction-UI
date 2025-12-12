@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AuthLayout } from "@/components/AuthLayout";
 import { Mail, Lock } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { login } from "@/services/authService";
 
 const loginSchema = z.object({
   email: z.string().email("Email không hợp lệ").min(1, "Email là bắt buộc"),
@@ -16,6 +18,7 @@ const loginSchema = z.object({
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -32,25 +35,24 @@ export function LoginPage() {
     setError("");
 
     try {
-      console.log("Login payload:", {
+      const response = await login({
         email: data.email,
         password: data.password,
       });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // TODO: Replace with actual API call
-      // const response = await loginUser(data);
-      // if (response.success) {
-      //   localStorage.setItem("token", response.data.token);
-      //   navigate("/");
-      // }
-
-      console.log("Login successful");
-      // navigate("/");
+      if (response?.success && response?.data) {
+        const { user, accessToken, refreshToken } = response.data;
+        
+        // Store in Auth context and localStorage
+        authLogin(user, accessToken, refreshToken);
+        
+        // Redirect to home
+        navigate("/");
+      } else {
+        setError(response?.message || "Đăng nhập thất bại");
+      }
     } catch (err) {
-      setError("Đăng nhập thất bại. Vui lòng thử lại.");
+      setError(err?.message || "Đăng nhập thất bại. Vui lòng thử lại.");
       console.error("Login error:", err);
     } finally {
       setIsLoading(false);
