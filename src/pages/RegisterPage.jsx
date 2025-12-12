@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AuthLayout } from "@/components/AuthLayout";
 import { Mail, Lock, User, MapPin } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 import { register as registerUser } from "@/services/authService";
 
 const registerSchema = z.object({
@@ -20,7 +19,6 @@ const registerSchema = z.object({
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -47,14 +45,9 @@ export function RegisterPage() {
 
       const response = await registerUser(payload);
 
-      if (response?.success && response?.data) {
-        const { user, accessToken, refreshToken } = response.data;
-        
-        // Store in Auth context and localStorage
-        login(user, accessToken, refreshToken);
-        
-        // Redirect to home
-        navigate("/");
+      if (response?.success) {
+        // Redirect to OTP verification with email
+        navigate("/verify-otp", { state: { email: data.email } });
       } else {
         setError(response?.message || "Đăng ký thất bại");
       }

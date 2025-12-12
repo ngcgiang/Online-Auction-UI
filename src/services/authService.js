@@ -23,7 +23,7 @@ export const verifyEmail = async (email, otpCode) => {
 
 // Resend verification email
 export const resendVerificationEmail = async (email) => {
-  return apiClient.post('/api/auth/resend-otp', { email });
+  return apiClient.patch('/api/auth/resend-otp', { email });
 };
 
 // Refresh auth token
