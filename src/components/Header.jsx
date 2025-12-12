@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 export function Header() {
@@ -12,8 +13,12 @@ export function Header() {
 
           {/* Auth Buttons */}
           <div className="flex items-center gap-3">
-            <Button variant="ghost">Đăng nhập</Button>
-            <Button variant="default">Đăng ký</Button>
+            <Link to="/login">
+              <Button variant="ghost">Đăng nhập</Button>
+            </Link>
+            <Link to="/register">
+              <Button variant="default">Đăng ký</Button>
+            </Link>
           </div>
         </div>
       </div>
