@@ -1,9 +1,11 @@
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, Gavel, ArrowRight, CircleDollarSign } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice, calculateTimeRemaining } from "@/services/productService";
 
 export function TopStatsSection({ endingSoon, mostBidded, highestPrice, loading }) {
+  const navigate = useNavigate();
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-6">
@@ -69,6 +71,7 @@ export function TopStatsSection({ endingSoon, mostBidded, highestPrice, loading 
                     <div
                       key={product.product_id}
                       className="flex justify-between items-start p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/product/${product.product_id}`)}
                     >
                         <div className="flex-1 min-w-0">
                         {/* Hàng chứa Name và Time */}
@@ -117,6 +120,7 @@ export function TopStatsSection({ endingSoon, mostBidded, highestPrice, loading 
                   <div
                     key={product.product_id}
                     className="flex justify-between items-start p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/product/${product.product_id}`)}
                   >
                     <div className="flex-1 min-w-0">
                         {/* Hàng chứa Tên và Số lượt đấu giá */}
@@ -128,7 +132,7 @@ export function TopStatsSection({ endingSoon, mostBidded, highestPrice, loading 
                             <div className="flex items-center gap-1 shrink-0 text-muted-foreground">
                             <Gavel className="h-3 w-3" />
                             <span className="text-xs whitespace-nowrap">
-                                {product.bid_count || 0} lượt
+                                {product.bidCount || 0} lượt
                             </span>
                             </div>
                         </div>
@@ -164,6 +168,7 @@ export function TopStatsSection({ endingSoon, mostBidded, highestPrice, loading 
                   <div
                     key={product.product_id}
                     className="flex justify-between items-start p-3 rounded-md border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/product/${product.product_id}`)}
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">

@@ -89,8 +89,8 @@ export const formatProductData = (product) => {
     sellerId: product.seller_id,
     winnerId: product.winner_id,
     status: product.status,
-    bidCount: product.bid_count || 0,
-    isNew: product.is_new || false,
+    bidCount: product.bidCount || 0,
+    isNew: product.isNew || false,
     createdAt: product.created_at,
     updatedAt: product.updated_at,
   };

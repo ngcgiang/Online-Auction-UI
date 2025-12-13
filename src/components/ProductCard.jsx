@@ -102,7 +102,7 @@ export function ProductCard({ product, loading }) {
           {/* Total Bids */}
           <div className="flex items-center gap-2">
             <Gavel className="h-4 w-4" />
-            <span>{product.bid_count || 0} lượt đấu giá</span>
+            <span>{product.bidCount || 0} lượt đấu giá</span>
           </div>
         </div>
       </CardContent>
