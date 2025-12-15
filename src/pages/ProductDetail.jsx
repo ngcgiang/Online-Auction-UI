@@ -11,6 +11,7 @@ import { getBidsByProductId } from "@/services/bidService";
 import { QnAThread } from "@/components/QnAThread";
 import { useProductSocket } from "@/hooks/useProductSocket";
 import { formatTimeRemaining } from "@/lib/socket";
+import { Header } from "@/components/Header";
 
 export function ProductDetail() {
   const { productId } = useParams();
@@ -209,6 +210,12 @@ export function ProductDetail() {
   };
 
   const handlePlaceBid = () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    if (!bidAmount) return;
     if (!bidAmount) return;
     console.log("Placing bid:", bidAmount);
     // API call would go here
@@ -300,6 +307,7 @@ export function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header />
       {/* Back Button */}
       <div className="border-b">
         <div className="container mx-auto px-4 py-4">
