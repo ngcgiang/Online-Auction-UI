@@ -7,16 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Heart, Star, Clock, User, Gavel, ArrowLeft, Send, AlertCircle, CheckCircle2 } from "lucide-react";
 import { formatPrice, getProductDetails, getProductQnA, getRelatedProducts } from "@/services/productService";
-import { getBidsByProductId } from "@/services/bidService";
+import { getBidsByProductId, placeBid } from "@/services/bidService";
 import { QnAThread } from "@/components/QnAThread";
 import { useProductSocket } from "@/hooks/useProductSocket";
 import { formatTimeRemaining } from "@/lib/socket";
 import { Header } from "@/components/Header";
+import { BidInput } from "@/components/BidInput";
 
 export function ProductDetail() {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const [bidAmount, setBidAmount] = useState("");
   const [selectedImage, setSelectedImage] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [product, setProduct] = useState(null);
@@ -30,7 +30,6 @@ export function ProductDetail() {
   const [bidHistory, setBidHistory] = useState([]);
   const [bidLoading, setBidLoading] = useState(true);
   const [socketConnected, setSocketConnected] = useState(false);
-  const [socketError, setSocketError] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState("--:--:--");
 
   useEffect(() => {
@@ -90,11 +89,9 @@ export function ProductDetail() {
     // onConnectionEstablished callback
     () => {
       setSocketConnected(true);
-      setSocketError(null);
     },
     // onConnectionError callback
-    (error) => {
-      setSocketError(error?.message || "Lỗi kết nối socket");
+    () => {
       setSocketConnected(false);
     }
   );
@@ -207,18 +204,6 @@ export function ProductDetail() {
     if (diffHours < 24) return `${diffHours} giờ trước`;
     if (diffDays < 30) return `${diffDays} ngày trước`;
     return formatDate(dateString);
-  };
-
-  const handlePlaceBid = () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-    if (!bidAmount) return;
-    if (!bidAmount) return;
-    console.log("Placing bid:", bidAmount);
-    // API call would go here
   };
 
   const handleBuyNow = () => {
@@ -456,30 +441,32 @@ export function ProductDetail() {
 
             {/* Bidding Section */}
             <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium mb-2 flex items-center gap-2">
-                      <Gavel className="h-4 w-4" />
-                      Đấu giá
-                    </label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="number"
-                        placeholder="Nhập giá đấu..."
-                        value={bidAmount}
-                        onChange={(e) => setBidAmount(e.target.value)}
-                        className="text-lg"
-                      />
-                      <Button onClick={handlePlaceBid} size="lg">
-                        Đặt giá
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Bước giá: {formatPrice(parseFloat(product.price_step))}
-                    </p>
-                  </div>
-                </div>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Gavel className="h-4 w-4" />
+                  Đấu giá
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BidInput
+                  currentPrice={product.current_price || 0}
+                  stepPrice={parseFloat(product.price_step) || 0}
+                  placeBid={async (bidAmount) => {
+                    return new Promise((resolve, reject) => {
+                      placeBid(product.product_id, bidAmount)
+                        .then((response) => {
+                          if (response?.success) {
+                            resolve();
+                          } else {
+                            reject(new Error(response?.message || "Đặt giá thất bại"));
+                          }
+                        })
+                        .catch((err) => {
+                          reject(err);
+                        });
+                    });
+                  }}
+                />
               </CardContent>
             </Card>
 
