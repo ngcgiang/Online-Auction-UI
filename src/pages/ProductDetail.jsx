@@ -5,6 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Heart, Star, Clock, User, Gavel, ArrowLeft, Send, AlertCircle, CheckCircle2 } from "lucide-react";
 import { formatPrice, getProductDetails, getProductQnA, getRelatedProducts } from "@/services/productService";
 import { getBidsByProductId, placeBid } from "@/services/bidService";
@@ -36,6 +44,8 @@ export function ProductDetail() {
   const [bidLoading, setBidLoading] = useState(true);
   const [socketConnected, setSocketConnected] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState("--:--:--");
+  const [isConfirmingBid, setIsConfirmingBid] = useState(false);
+  const [pendingBidAmount, setPendingBidAmount] = useState(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -120,19 +130,46 @@ export function ProductDetail() {
       return Promise.reject(new Error("Vui lòng đăng nhập để đặt giá"));
     }
 
+    // Show confirmation dialog
+    setPendingBidAmount(bidAmount);
+    setIsConfirmingBid(true);
+    
+    // Return a promise that will be resolved when user confirms
     return new Promise((resolve, reject) => {
-      placeBid(product.product_id, bidAmount)
-        .then((response) => {
-          if (response?.success) {
-            resolve();
-          } else {
-            reject(new Error(response?.message || "Đặt giá thất bại"));
-          }
-        })
-        .catch((err) => {
-          reject(err);
-        });
+      // Store resolve and reject for later use
+      window.bidPromiseResolve = resolve;
+      window.bidPromiseReject = reject;
     });
+  };
+
+  // Handle bid confirmation after user approves
+  const handleConfirmBid = async () => {
+    setIsConfirmingBid(false);
+
+    try {
+      const response = await placeBid(product.product_id, pendingBidAmount);
+      if (response?.success) {
+        // Resolve the promise from handlePlaceBid
+        window.bidPromiseResolve?.();
+      } else {
+        window.bidPromiseReject?.(new Error(response?.message || "Đặt giá thất bại"));
+      }
+    } catch (err) {
+      window.bidPromiseReject?.(err);
+    } finally {
+      setPendingBidAmount(null);
+      delete window.bidPromiseResolve;
+      delete window.bidPromiseReject;
+    }
+  };
+
+  // Handle bid cancellation
+  const handleCancelBid = () => {
+    setIsConfirmingBid(false);
+    setPendingBidAmount(null);
+    window.bidPromiseReject?.(new Error("Người dùng hủy bỏ đặt giá"));
+    delete window.bidPromiseResolve;
+    delete window.bidPromiseReject;
   };
 
   // Socket.io integration for real-time price and bid updates
@@ -787,6 +824,65 @@ export function ProductDetail() {
           </Card>
         )}
       </div>
+
+      {/* Bid Confirmation Dialog */}
+      <Dialog open={isConfirmingBid} onOpenChange={setIsConfirmingBid}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Xác nhận đặt giá</DialogTitle>
+            <DialogDescription>
+              Vui lòng xác nhận thông tin đặt giá của bạn
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Bid Details */}
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Tên sản phẩm</p>
+              <p className="font-semibold text-foreground">{product?.product_name}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Giá hiện tại</p>
+                <p className="font-semibold text-foreground">
+                  {formatPrice(product?.current_price)}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Giá đặt của bạn</p>
+                <p className="font-semibold text-primary text-lg">
+                  {formatPrice(pendingBidAmount)}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t">
+              <p className="text-sm text-muted-foreground">Tăng giá</p>
+              <p className="font-semibold text-foreground">
+                {formatPrice(pendingBidAmount - (product?.current_price || 0))}
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2 justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancelBid}
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmBid}
+              className="bg-black hover:bg-gray-800"
+            >
+              Xác nhận đặt giá
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
