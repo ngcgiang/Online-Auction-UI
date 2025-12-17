@@ -9,6 +9,7 @@ import { LoginPage } from "./pages/LoginPage.jsx";
 import { RegisterPage } from "./pages/RegisterPage.jsx";
 import { OTPVerificationPage } from "./pages/OTPVerificationPage.jsx";
 import { UserProfilePage } from "./pages/UserProfilePage.jsx";
+import SellerManagementPage from "./pages/SellerManagementPage.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 
 const router = createBrowserRouter([
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
   {
     path: "/user-profile",
     element: <UserProfilePage />,
+  },
+  {
+    path: "/seller-management",
+    element: <SellerManagementPage />,
   }
 ]);
 

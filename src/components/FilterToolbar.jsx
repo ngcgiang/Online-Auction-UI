@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
-import { Select, SelectOption } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Search, ChevronDown, ChevronRight } from "lucide-react";
 import { getCategories, organizeCategoriesHierarchy } from "@/services/categoryService";
 
@@ -122,13 +128,15 @@ export function FilterToolbar({ onFilterChange }) {
           {/* Sort */}
           <div className="flex-1 min-w-[200px]">
             <label className="text-sm font-medium mb-1.5 block">Sắp xếp</label>
-            <Select
-              value={filters.sortBy}
-              onChange={(e) => handleChange("sortBy", e.target.value)}
-            >
-              <SelectOption value="time">Thời gian kết thúc giảm dần</SelectOption>
-              <SelectOption value="price">Giá tăng dần</SelectOption>
-              <SelectOption value="bid">Nhiều lượt đấu giá nhất</SelectOption>
+            <Select value={filters.sortBy} onValueChange={(value) => handleChange("sortBy", value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn cách sắp xếp" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="time">Thời gian kết thúc giảm dần</SelectItem>
+                <SelectItem value="price">Giá tăng dần</SelectItem>
+                <SelectItem value="bid">Nhiều lượt đấu giá nhất</SelectItem>
+              </SelectContent>
             </Select>
           </div>
 

@@ -123,3 +123,7 @@
     @apply bg-background text-foreground;
   }
 }
+
+.ql-toolbar + .ql-toolbar {
+  display: none;
+}
