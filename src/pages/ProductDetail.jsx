@@ -8,17 +8,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Heart, Star, Clock, User, Gavel, ArrowLeft, Send, AlertCircle, CheckCircle2 } from "lucide-react";
 import { formatPrice, getProductDetails, getProductQnA, getRelatedProducts } from "@/services/productService";
 import { getBidsByProductId, placeBid } from "@/services/bidService";
+import { addToWatchList, removeFromWatchList, getWatchListByUserId } from "@/services/watchListService";
 import { QnAThread } from "@/components/QnAThread";
 import { useProductSocket } from "@/hooks/useProductSocket";
 import { formatTimeRemaining } from "@/lib/socket";
 import { Header } from "@/components/Header";
 import { BidInput } from "@/components/BidInput";
+import { useAuth } from "@/context/AuthContext";
 
 export function ProductDetail() {
   const { productId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedImage, setSelectedImage] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -56,6 +60,56 @@ export function ProductDetail() {
 
     fetchProduct();
   }, [productId]);
+
+  // Fetch watch list status on component mount
+  useEffect(() => {
+    const fetchWatchListStatus = async () => {
+      if (!user?.user_id || !productId) return;
+
+      try {
+        const response = await getWatchListByUserId(user.user_id);
+        // Check if current product is in the user's watch list
+        if (Array.isArray(response.data)) {
+          const isInWatchList = response.data.some(
+            (item) => item.product_id === parseInt(productId)
+          );
+          setIsWishlisted(isInWatchList);
+        }
+      } catch (err) {
+        console.error("Error fetching watch list:", err);
+      }
+    };
+
+    fetchWatchListStatus();
+  }, [user?.user_id, productId]);
+
+  // Handle wishlist toggle
+  const handleWishlistToggle = async () => {
+    if (!user?.user_id) {
+      // Redirect to login if not authenticated
+      navigate("/login");
+      return;
+    }
+
+    setWishlistLoading(true);
+    try {
+      if (isWishlisted) {
+        // Remove from watch list
+        await removeFromWatchList(user.user_id, productId);
+        setIsWishlisted(false);
+      } else {
+        // Add to watch list
+        await addToWatchList(user.user_id, productId);
+        setIsWishlisted(true);
+      }
+    } catch (err) {
+      console.error("Error toggling wishlist:", err);
+      // Revert state on error
+      setIsWishlisted(!isWishlisted);
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   // Socket.io integration for real-time price and bid updates
   useProductSocket(
@@ -372,8 +426,10 @@ export function ProductDetail() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsWishlisted(!isWishlisted)}
+                onClick={handleWishlistToggle}
+                disabled={wishlistLoading}
                 className={isWishlisted ? "text-red-500" : ""}
+                title={isWishlisted ? "Bỏ khỏi danh sách yêu thích" : "Thêm vào danh sách yêu thích"}
               >
                 <Heart
                   className={`h-5 w-5 ${isWishlisted ? "fill-current" : ""}`}
