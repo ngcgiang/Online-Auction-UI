@@ -285,6 +285,17 @@ export function ProductDetail() {
     }
   };
 
+  const getPermissionBadge = (permission) => {
+    switch (permission) {
+      case true:
+        return <Badge variant="success">Công khai</Badge>;
+      case false:
+        return <Badge variant="warning">Riêng tư</Badge>;
+      default:
+        return <Badge variant="secondary">{permission}</Badge>;
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -458,7 +469,10 @@ export function ProductDetail() {
               <h1 className="text-3xl font-bold mb-2">
                 {product.product_name}
               </h1>
-              {getStatusBadge(product.status)}
+              <div className="flex gap-2">
+                {getStatusBadge(product.status)}
+                {getPermissionBadge(product.permission)}
+              </div>
             </div>
 
             {/* Current Price */}

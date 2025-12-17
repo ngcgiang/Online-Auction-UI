@@ -5,6 +5,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Clock, Gavel, Calendar } from "lucide-react";
 import { formatPrice, calculateTimeRemaining } from "@/services/productService";
 
+const getPermissionBadge = (permission) => {
+  return (
+    <div className="flex items-center gap-1 mb-2">
+      <span className="text-xs text-muted-foreground">
+        {permission ? 'Công khai' : 'Riêng tư'}
+      </span>
+    </div>
+  );
+};
+
 export function ProductCard({ product, loading }) {
   const navigate = useNavigate();
 
@@ -65,6 +75,7 @@ export function ProductCard({ product, loading }) {
         <h3 className="font-semibold text-base line-clamp-2 mb-2 group-hover:text-primary transition-colors">
           {product.product_name}
         </h3>
+        {getPermissionBadge(product.permission)}
 
         {/* Current Price */}
         <div className="mb-4">
@@ -87,7 +98,7 @@ export function ProductCard({ product, loading }) {
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <span>
-              {new Date(product.created_at).toLocaleDateString("vi-VN")}
+              {new Date(product.start_time).toLocaleDateString("vi-VN")}
             </span>
           </div>
 
