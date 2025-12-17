@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -18,6 +18,7 @@ const loginSchema = z.object({
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login: authLogin } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -46,8 +47,13 @@ export function LoginPage() {
         // Store in Auth context and localStorage
         authLogin(user, accessToken, refreshToken);
         
-        // Redirect to home
-        navigate("/");
+        // Redirect to previous page or home
+        const fromLocation = location.state?.from;
+        if (fromLocation) {
+          navigate(fromLocation, { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
       } else {
         setError(response?.message || "Đăng nhập thất bại");
       }

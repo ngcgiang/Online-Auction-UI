@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useLocation } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 export function ProductDetail() {
   const { productId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [selectedImage, setSelectedImage] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -86,8 +87,8 @@ export function ProductDetail() {
   // Handle wishlist toggle
   const handleWishlistToggle = async () => {
     if (!user?.user_id) {
-      // Redirect to login if not authenticated
-      navigate("/login");
+      // Redirect to login with current location in state
+      navigate("/login", { state: { from: location } });
       return;
     }
 
@@ -109,6 +110,29 @@ export function ProductDetail() {
     } finally {
       setWishlistLoading(false);
     }
+  };
+
+  // Handle bid submission with authentication check
+  const handlePlaceBid = async (bidAmount) => {
+    if (!user?.user_id) {
+      // Redirect to login with current location in state
+      navigate("/login", { state: { from: location } });
+      return Promise.reject(new Error("Vui lòng đăng nhập để đặt giá"));
+    }
+
+    return new Promise((resolve, reject) => {
+      placeBid(product.product_id, bidAmount)
+        .then((response) => {
+          if (response?.success) {
+            resolve();
+          } else {
+            reject(new Error(response?.message || "Đặt giá thất bại"));
+          }
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
   };
 
   // Socket.io integration for real-time price and bid updates
@@ -521,21 +545,7 @@ export function ProductDetail() {
                 <BidInput
                   currentPrice={product.current_price || 0}
                   stepPrice={parseFloat(product.price_step) || 0}
-                  placeBid={async (bidAmount) => {
-                    return new Promise((resolve, reject) => {
-                      placeBid(product.product_id, bidAmount)
-                        .then((response) => {
-                          if (response?.success) {
-                            resolve();
-                          } else {
-                            reject(new Error(response?.message || "Đặt giá thất bại"));
-                          }
-                        })
-                        .catch((err) => {
-                          reject(err);
-                        });
-                    });
-                  }}
+                  placeBid={handlePlaceBid}
                 />
               </CardContent>
             </Card>
