@@ -8,6 +8,7 @@ import { ProductDetail } from "./pages/ProductDetail.jsx";
 import { LoginPage } from "./pages/LoginPage.jsx";
 import { RegisterPage } from "./pages/RegisterPage.jsx";
 import { OTPVerificationPage } from "./pages/OTPVerificationPage.jsx";
+import { UserProfilePage } from "./pages/UserProfilePage.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 
 const router = createBrowserRouter([
@@ -31,6 +32,10 @@ const router = createBrowserRouter([
     path: "/verify-otp",
     element: <OTPVerificationPage />,
   },
+  {
+    path: "/user-profile",
+    element: <UserProfilePage />,
+  }
 ]);
 
 const root = document.getElementById("root");

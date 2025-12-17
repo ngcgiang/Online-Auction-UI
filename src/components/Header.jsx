@@ -33,17 +33,20 @@ export function Header() {
               onMouseLeave={() => setIsHovering(false)}
             >
               <div className="relative">
-                <div className="flex items-center gap-2 cursor-pointer transition-colors hover:text-primary">
-                  <User className="h-5 w-5" />
-                  <div className="hidden sm:block text-sm">
-                    <p className="font-medium text-foreground">{user.full_name}</p>
-                    {user.upgrade_at && new Date() - new Date(user.upgrade_at) > 7*24*60*60*1000 ? (
-                      <p className="text-xs text-muted-foreground">Expired Seller</p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">{user.role}</p>
-                    )}
-                  </div>
+              <div 
+                className="flex items-center gap-2 cursor-pointer transition-colors hover:text-primary"
+                onClick={() => navigate("/user-profile")}
+              >
+                <User className="h-5 w-5" />
+                <div className="hidden sm:block text-sm">
+                <p className="font-medium text-foreground">{user.full_name}</p>
+                {user.upgrade_at && new Date() - new Date(user.upgrade_at) > 7*24*60*60*1000 ? (
+                  <p className="text-xs text-muted-foreground">Expired Seller</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">{user.role}</p>
+                )}
                 </div>
+              </div>
               </div>
               
               {/* Logout Button - Show on hover */}
