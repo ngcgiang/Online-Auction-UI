@@ -7,3 +7,8 @@ import apiClient from '@/lib/axios';
 export const getUserProfile = async () => {
   return apiClient.get(`/api/users/profile`);
 }
+
+// Request user upgrade to seller
+export const requestUserUpgrade = async () => {
+  return apiClient.post(`/api/seller/request-upgrade`);
+}
