@@ -9,7 +9,8 @@ import { LoginPage } from "./pages/LoginPage.jsx";
 import { RegisterPage } from "./pages/RegisterPage.jsx";
 import { OTPVerificationPage } from "./pages/OTPVerificationPage.jsx";
 import { UserProfilePage } from "./pages/UserProfilePage.jsx";
-import SellerManagementPage from "./pages/SellerManagementPage.jsx";
+import  SellerManagementPage  from "./pages/SellerManagementPage.jsx";
+import  AdminManagementPage  from "./pages/AdminManagementPage.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 
 const router = createBrowserRouter([
@@ -40,6 +41,10 @@ const router = createBrowserRouter([
   {
     path: "/seller-management",
     element: <SellerManagementPage />,
+  },
+  {
+    path: "/admin-management",
+    element: <AdminManagementPage />,
   }
 ]);
 

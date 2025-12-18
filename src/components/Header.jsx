@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, LogOut, Settings, Loader2, Check, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { requestUserUpgrade } from "@/services/userService";
@@ -170,7 +169,7 @@ export function Header() {
               {user.role === "admin" && (
                 <Button 
                   variant="outline"
-                  onClick={() => navigate("/admin-dashboard")}
+                  onClick={() => navigate("/admin-management")}
                   className="gap-2"
                 >
                   <Settings className="h-4 w-4" />
