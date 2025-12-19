@@ -146,7 +146,7 @@ export function Header() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-foreground">Auction</h1>
+            <h1 className="text-2xl font-bold text-foreground">Online Auction</h1>
           </div>
 
           {/* Auth Section */}

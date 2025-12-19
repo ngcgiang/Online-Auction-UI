@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import AdminHeader from '@/components/admin/AdminHeader';
+import { Header } from "@/components/Header";
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import Dashboard from '@/components/admin/Dashboard';
 import CategoryManagement from '@/components/admin/CategoryManagement';
@@ -60,7 +60,8 @@ const AdminManagementPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <AdminHeader />
+      {/* Header */}
+      <Header />
       <div className="flex">
         {/* Sidebar */}
         <AdminSidebar 

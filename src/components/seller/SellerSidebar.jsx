@@ -1,43 +1,36 @@
 import React from 'react';
 import {
   LayoutDashboard,
-  FolderOpen,
   Package,
-  Users,
+  Plus,
   ChevronRight,
   Menu,
   X,
   ArrowLeft,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useNavigate } from "react-router";
+import { Button } from '@/components/ui/button';
 
-const AdminSidebar = ({ activeSection, onNavigate, isOpen, onToggle }) => {
+const SellerSidebar = ({ activeTab, onNavigate, isOpen, onToggle }) => {
     const navigate = useNavigate();
   const menuItems = [
     {
-      id: 'dashboard',
-      label: 'Dashboard',
+      id: 'overview',
+      label: 'Tổng quan',
       icon: LayoutDashboard,
       description: 'Tổng quan',
     },
     {
-      id: 'categories',
-      label: 'Danh mục',
-      icon: FolderOpen,
-      description: 'Quản lý danh mục',
-    },
-    {
       id: 'products',
-      label: 'Sản phẩm',
+      label: 'Danh sách sản phẩm',
       icon: Package,
       description: 'Quản lý sản phẩm',
     },
     {
-      id: 'users',
-      label: 'Người dùng',
-      icon: Users,
-      description: 'Quản lý người dùng',
+      id: 'create',
+      label: 'Đăng sản phẩm',
+      icon: Plus,
+      description: 'Đăng sản phẩm mới',
     },
   ];
 
@@ -57,20 +50,19 @@ const AdminSidebar = ({ activeSection, onNavigate, isOpen, onToggle }) => {
           isOpen ? 'w-64' : 'w-0 md:w-64'
         } overflow-hidden md:overflow-visible`}
       >
-        <div className="p-6 ">
-              <Button
-              variant="ghost"
-              onClick={() => navigate("/")}
-              className="gap-2 mb-4"
+        <div className="p-6">
+            <Button
+                variant="ghost"
+                onClick={() => navigate("/")}
+                className="gap-2 mb-4"
             >
-              <ArrowLeft className="h-4 w-4" />
-              Quay lại
+                <ArrowLeft className="h-4 w-4" />
+                Quay lại
           </Button>
-
           <nav className="space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeSection === item.id;
+              const isActive = activeTab === item.id;
 
               return (
                 <button
@@ -105,4 +97,4 @@ const AdminSidebar = ({ activeSection, onNavigate, isOpen, onToggle }) => {
   );
 };
 
-export default AdminSidebar;
+export default SellerSidebar;
