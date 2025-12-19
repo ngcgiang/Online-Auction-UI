@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { getAllUsers, getUpgradeRequests, approveUserUpgrade, rejectUserUpgrade } from '@/services/adminService';
+import { getAllUsers, getUpgradeRequests, approveUserUpgrade, rejectUserUpgrade, deleteUser } from '@/services/adminService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import UserDetail from './UserDetail';
 import {
   AlertCircle,
   CheckCircle2,
   Loader2,
-  Lock,
-  Unlock,
+  User,
   Check,
   X,
 } from 'lucide-react';
@@ -19,6 +19,8 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState(null);
   const [processingId, setProcessingId] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isUserDetailOpen, setIsUserDetailOpen] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -45,6 +47,19 @@ const UserManagement = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  /**
+   * Format date to DD/MM/YYYY
+   */
+  const formatDate = (dateString) => {
+    if (!dateString) return "Chưa cập nhật";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   };
 
   const handleApproveUpgrade = async (userId) => {
@@ -91,6 +106,22 @@ const UserManagement = () => {
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const handleViewUserDetail = (user) => {
+    setSelectedUser(user);
+    setIsUserDetailOpen(true);
+  };
+
+  const handleUserSave = (updatedUser) => {
+    setAllUsers((prev) =>
+      prev.map((u) => (u.user_id === updatedUser.user_id ? updatedUser : u))
+    );
+    setMessage({
+      type: 'success',
+      text: 'Thông tin người dùng đã được cập nhật',
+    });
+    setTimeout(() => setMessage(null), 3000);
   };
 
   const getRoleBadge = (role) => {
@@ -239,16 +270,22 @@ const UserManagement = () => {
                           {getStatusBadge(user.status)}
                         </td>
                         <td className="px-4 py-3 text-sm text-muted-foreground">
-                          {new Date(user.created_at).toLocaleDateString('vi-VN')}
+                          {formatDate(user.created_at)}
                         </td>
                         <td className="px-4 py-3 text-sm text-right">
-                          <button className="p-2 hover:bg-blue-50 rounded transition-colors inline-block">
-                            {user.status === 'active' ? (
-                              <Lock className="h-4 w-4 text-blue-600" title="Khóa tài khoản" />
-                            ) : (
-                              <Unlock className="h-4 w-4 text-green-600" title="Mở khóa tài khoản" />
-                            )}
-                          </button>
+                          
+                            <button 
+                            onClick={() => handleViewUserDetail(user)}
+                            className="p-2 hover:bg-blue-50 rounded transition-colors inline-block">
+                              {/* View User Details Button */}
+                              <User className="h-4 w-4 text-blue-600" />
+                            </button>
+                            <button 
+                            onClick={() => deleteUser(user.user_id)}
+                            className="p-2 hover:bg-red-50 rounded transition-colors inline-block">
+                              <X className="h-4 w-4 text-red-600" />
+                            </button>
+                          
                         </td>
                       </tr>
                     ))}
@@ -360,6 +397,14 @@ const UserManagement = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* User Detail Modal */}
+      <UserDetail
+        isOpen={isUserDetailOpen}
+        onClose={() => setIsUserDetailOpen(false)}
+        user={selectedUser}
+        onSave={handleUserSave}
+      />
     </div>
   );
 };

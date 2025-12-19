@@ -26,6 +26,16 @@ export const getAllUsers = async () => {
   return apiClient.get(`/api/admin/get-all-users`);
 }
 
+/** Delete user */
+export const deleteUser = async (userId) => {
+    return apiClient.delete(`/api/admin/delete-user/${userId}`);
+}
+
+/** Update user */
+export const updateUser = async (userId, userData) => {
+    return apiClient.patch(`/api/admin/update-user/${userId}`, userData);
+}
+
 /** Create new category */
 export const createNewCategory = async (categoryData) => {
     return apiClient.post(`/api/admin/new-category`, categoryData);
@@ -34,11 +44,6 @@ export const createNewCategory = async (categoryData) => {
 /** Delete category */
 export const deleteCategory = async (categoryId) => {
     return apiClient.delete(`/api/admin/delete-category/${categoryId}`);
-}
-
-/** Delete user */
-export const deleteUser = async (userId) => {
-    return apiClient.delete(`/api/admin/delete-user/${userId}`);
 }
 
 /** Delete product */

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bell, Search, LogOut, User } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 
 const AdminHeader = () => {
   const { user, logout } = useAuth();
@@ -42,11 +42,6 @@ const AdminHeader = () => {
 
             {/* Right Section - Notifications & Profile */}
         <div className="flex items-center gap-4 ml-auto">
-          {/* Notification Bell */}
-          <button className="relative p-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
 
           {/* Profile Dropdown */}
           <div className="relative">
