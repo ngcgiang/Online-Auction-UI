@@ -8,7 +8,7 @@ import { requestUserUpgrade } from "@/services/userService";
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
-  const [isHovering, setIsHovering] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
 
@@ -198,35 +198,45 @@ export function Header() {
                 </div>
               )}
 
-              {/* User Profile with Logout */}
-              <div 
-                className="flex items-center gap-3"
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-              >
-                <div className="relative">
-                <div 
-                  className="flex items-center gap-2 cursor-pointer transition-colors hover:text-primary"
-                  onClick={() => navigate("/user-profile")}
+              {/* Profile Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors"
                 >
-                  <User className="h-5 w-5" />
-                  <div className="hidden sm:block text-sm">
-                  <p className="font-medium text-foreground">{user.full_name}</p>
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    {user?.full_name?.charAt(0).toUpperCase() || 'A'}
                   </div>
-                </div>
-                </div>
-                
-                {/* Logout Button - Show on hover */}
-                {isHovering && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={handleLogout}
-                    className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span className="hidden sm:inline">Đăng xuất</span>
-                  </Button>
+                  <span className="hidden sm:inline text-sm font-medium text-foreground">
+                    {user?.full_name || 'Admin'}
+                  </span>
+                </button>
+    
+                {/* Dropdown Menu */}
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-50">
+                    <div className="p-4 border-b">
+                      <p className="text-sm font-medium text-foreground">{user?.full_name}</p>
+                      <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        navigate('/user-profile');
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-accent flex items-center gap-2"
+                    >
+                      <User className="h-4 w-4" />
+                      <span>Hồ sơ cá nhân</span>
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 border-t"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Đăng xuất</span>
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

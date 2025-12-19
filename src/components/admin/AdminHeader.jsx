@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { LogOut, User } from 'lucide-react';
 
 const AdminHeader = () => {
@@ -67,7 +66,7 @@ const AdminHeader = () => {
                 <button
                   onClick={() => {
                     setIsProfileOpen(false);
-                    navigate('/admin-profile');
+                    navigate('/user-profile');
                   }}
                   className="w-full text-left px-4 py-2 text-sm hover:bg-accent flex items-center gap-2"
                 >

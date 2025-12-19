@@ -54,7 +54,7 @@ const AdminSidebar = ({ activeSection, onNavigate, isOpen, onToggle }) => {
         } overflow-hidden md:overflow-visible`}
       >
         <div className="p-6">
-          <h2 className="text-lg font-bold text-foreground mb-8">Admin Panel</h2>
+          <h2 className="text-lg font-bold text-foreground mb-8">Online Auction</h2>
 
           <nav className="space-y-2">
             {menuItems.map((item) => {
