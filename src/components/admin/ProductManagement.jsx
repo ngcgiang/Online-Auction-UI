@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { deleteProduct } from '@/services/adminService';
+import { searchProducts, getAllProducts } from '@/services/productService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 import {
   Trash2,
   AlertCircle,
@@ -14,78 +24,66 @@ import {
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [message, setMessage] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteReason, setDeleteReason] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10,
+    totalItems: 0,
+    totalPages: 0,
+  });
 
   useEffect(() => {
     fetchProducts();
-  }, []);
-
-  useEffect(() => {
-    // Filter products based on search query
-    const filtered = products.filter(
-      (product) =>
-        product.product_name
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        product.seller_name?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredProducts(filtered);
-  }, [searchQuery, products]);
+  }, [currentPage, searchQuery]);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      // Mock data - Replace with API call when available
-      const mockProducts = [
-        {
-          product_id: 1,
-          product_name: 'iPhone 15 Pro Max',
-          category: 'Điện tử',
-          seller_name: 'Tech Store',
-          current_price: 25000000,
-          status: 'active',
-          image_url: 'https://via.placeholder.com/50',
-        },
-        {
-          product_id: 2,
-          product_name: 'Samsung Galaxy S24',
-          category: 'Điện tử',
-          seller_name: 'Mobile Shop',
-          current_price: 20000000,
-          status: 'active',
-          image_url: 'https://via.placeholder.com/50',
-        },
-        {
-          product_id: 3,
-          product_name: 'Nike Air Force 1',
-          category: 'Thời trang',
-          seller_name: 'Fashion Hub',
-          current_price: 5000000,
-          status: 'completed',
-          image_url: 'https://via.placeholder.com/50',
-        },
-        {
-          product_id: 4,
-          product_name: 'MacBook Pro 16',
-          category: 'Điện tử',
-          seller_name: 'Apple Authorized',
-          current_price: 50000000,
-          status: 'active',
-          image_url: 'https://via.placeholder.com/50',
-        },
-      ];
-      setProducts(mockProducts);
-      setFilteredProducts(mockProducts);
+      let response;
+      
+      // Use searchProducts if there's a search query, otherwise get all products
+      if (searchQuery.trim()) {
+        response = await searchProducts({
+          keyword: searchQuery,
+          page: currentPage,
+        });
+      } else {
+        response = await getAllProducts(currentPage);
+      }
+
+      console.log('API response for products:', response);
+      
+      // Extract products and pagination info from response
+      const productList = response.data || [];
+      const paginationInfo = response.pagination || {
+        currentPage: 1,
+        pageSize: 10,
+        totalItems: 0,
+        totalPages: 0,
+      };
+      
+      setProducts(productList);
+      setPagination(paginationInfo);
+      console.log('Fetched products:', productList);
+      console.log('Pagination info:', paginationInfo);
     } catch (error) {
       console.error('Error fetching products:', error);
       setMessage({
         type: 'error',
         text: 'Lỗi khi tải sản phẩm',
+      });
+      // Set empty state on error
+      setProducts([]);
+      setPagination({
+        currentPage: 1,
+        pageSize: 10,
+        totalItems: 0,
+        totalPages: 0,
       });
     } finally {
       setLoading(false);
@@ -113,6 +111,8 @@ const ProductManagement = () => {
       setDeleteConfirm(null);
       setDeleteReason('');
       setTimeout(() => setMessage(null), 3000);
+      // Refresh the products list
+      fetchProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
       setMessage({
@@ -132,12 +132,11 @@ const ProductManagement = () => {
   const getStatusBadge = (status) => {
     const statusMap = {
       active: { label: 'Đang diễn ra', color: 'bg-green-100 text-green-800' },
-      completed: {
-        label: 'Đã hoàn thành',
+      sold: {
+        label: 'Đã bán',
         color: 'bg-blue-100 text-blue-800',
       },
-      pending: { label: 'Chờ phê duyệt', color: 'bg-yellow-100 text-yellow-800' },
-      banned: { label: 'Bị cấm', color: 'bg-red-100 text-red-800' },
+      expired: { label: 'Đã hết hạn', color: 'bg-yellow-100 text-yellow-800' },
     };
     const config = statusMap[status] || statusMap.pending;
     return (
@@ -203,87 +202,157 @@ const ProductManagement = () => {
         <CardHeader>
           <CardTitle>Danh Sách Sản Phẩm</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {loading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
-          ) : filteredProducts.length === 0 ? (
+          ) : products.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery ? 'Không tìm thấy sản phẩm' : 'Chưa có sản phẩm nào'}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="text-left px-4 py-3 font-medium text-sm">
-                      Ảnh
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-sm">
-                      Tên Sản Phẩm
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-sm">
-                      Danh Mục
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-sm">
-                      Người Bán
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-sm">
-                      Giá Hiện Tại
-                    </th>
-                    <th className="text-left px-4 py-3 font-medium text-sm">
-                      Trạng Thái
-                    </th>
-                    <th className="text-right px-4 py-3 font-medium text-sm">
-                      Hành Động
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.map((product) => (
-                    <tr
-                      key={product.product_id}
-                      className="border-b hover:bg-muted/30 transition-colors"
-                    >
-                      <td className="px-4 py-3">
-                        <img
-                          src={product.image_url}
-                          alt={product.product_name}
-                          className="h-10 w-10 rounded object-cover"
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-sm font-medium text-foreground">
-                        {product.product_name}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {product.category}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {product.seller_name}
-                      </td>
-                      <td className="px-4 py-3 text-sm font-medium text-foreground">
-                        {formatCurrency(product.current_price)}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {getStatusBadge(product.status)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right">
-                        <button
-                          onClick={() =>
-                            setDeleteConfirm(product.product_id)
-                          }
-                          className="p-2 hover:bg-red-50 rounded transition-colors inline-block"
-                          title="Xóa sản phẩm"
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </button>
-                      </td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left px-4 py-3 font-medium text-sm">
+                        Ảnh
+                      </th>
+                      <th className="text-left px-4 py-3 font-medium text-sm">
+                        Tên Sản Phẩm
+                      </th>
+                      <th className="text-left px-4 py-3 font-medium text-sm">
+                        Danh Mục
+                      </th>
+                      <th className="text-left px-4 py-3 font-medium text-sm">
+                        Người Bán
+                      </th>
+                      <th className="text-left px-4 py-3 font-medium text-sm">
+                        Giá Hiện Tại
+                      </th>
+                      <th className="text-left px-4 py-3 font-medium text-sm">
+                        Trạng Thái
+                      </th>
+                      <th className="text-right px-4 py-3 font-medium text-sm">
+                        Hành Động
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {products.map((product) => (
+                      <tr
+                        key={product.product_id}
+                        className="border-b hover:bg-muted/30 transition-colors"
+                      >
+                        <td className="px-4 py-3">
+                          <img
+                            src={product.avatar}
+                            alt={product.product_name}
+                            className="h-10 w-10 rounded object-cover"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-sm font-medium text-foreground">
+                          {product.product_name}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">
+                          {product.category?.category_name}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">
+                          {product.seller?.full_name}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-medium text-foreground">
+                          {formatCurrency(product.current_price)}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {getStatusBadge(product.status)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right">
+                          <button
+                            onClick={() =>
+                              setDeleteConfirm(product.product_id)
+                            }
+                            className="p-2 hover:bg-red-50 rounded transition-colors inline-block"
+                            title="Xóa sản phẩm"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {pagination.totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                <div className="text-sm text-muted-foreground whitespace-nowrap">
+                  {pagination.currentPage} / {pagination.totalPages}
+                </div>
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (currentPage > 1) setCurrentPage(currentPage - 1);
+                          }}
+                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                        />
+                      </PaginationItem>
+
+                      {/* Page numbers */}
+                      {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                        .filter((page) => {
+                          if (pagination.totalPages <= 5) return true;
+                          if (page === 1 || page === pagination.totalPages) return true;
+                          if (Math.abs(page - currentPage) <= 1) return true;
+                          return false;
+                        })
+                        .map((page, index, array) => (
+                          <React.Fragment key={page}>
+                            {index > 0 && array[index - 1] !== page - 1 && (
+                              <PaginationItem>
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            )}
+                            <PaginationItem>
+                              <PaginationLink
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setCurrentPage(page);
+                                }}
+                                isActive={page === currentPage}
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          </React.Fragment>
+                        ))}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (currentPage < pagination.totalPages) setCurrentPage(currentPage + 1);
+                          }}
+                          className={
+                            currentPage === pagination.totalPages
+                              ? 'pointer-events-none opacity-50'
+                              : ''
+                          }
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
