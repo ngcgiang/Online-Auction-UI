@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Header } from "@/components/Header";
-import SellerSidebar from '@/components/seller/SellerSidebar';
-import SellerOverview from '@/components/seller/SellerOverview';
-import SellerProductList from '@/components/seller/SellerProductList';
-import CreateAuctionProduct from '@/components/CreateAuctionProduct';
+import AdminSidebar from '@/components/admin/AdminSidebar';
+import Dashboard from '@/components/admin/Dashboard';
+import CategoryManagement from '@/components/admin/CategoryManagement';
+import ProductManagement from '@/components/admin/ProductManagement';
+import UserManagement from '@/components/admin/UserManagement';
 
-const SellerManagementPage = () => {
+const AdminManagementPage = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeSection, setActiveSection] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -20,8 +21,8 @@ const SellerManagementPage = () => {
       return;
     }
 
-    // Redirect if user is not a seller
-    if (!loading && user && user.role !== 'seller') {
+    // Redirect if user is not an admin
+    if (!loading && user && user.role !== 'admin') {
       navigate('/');
     }
   }, [user, loading, navigate]);
@@ -37,32 +38,35 @@ const SellerManagementPage = () => {
     );
   }
 
-  if (!user || user.role !== 'seller') {
+  if (!user || user.role !== 'admin') {
     return null;
   }
 
-  // Render content based on active tab
+  // Render content based on active section
   const renderContent = () => {
-    switch (activeTab) {
-      case 'overview':
-        return <SellerOverview />;
+    switch (activeSection) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'categories':
+        return <CategoryManagement />;
       case 'products':
-        return <SellerProductList />;
-      case 'create':
-        return <CreateAuctionProduct />;
+        return <ProductManagement />;
+      case 'users':
+        return <UserManagement />;
       default:
-        return <SellerOverview />;
+        return <Dashboard />;
     }
   };
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Header */}
       <Header />
       <div className="flex">
         {/* Sidebar */}
-        <SellerSidebar 
-          activeTab={activeTab} 
-          onNavigate={setActiveTab}
+        <AdminSidebar 
+          activeSection={activeSection} 
+          onNavigate={setActiveSection}
           isOpen={isSidebarOpen}
           onToggle={setIsSidebarOpen}
         />
@@ -78,4 +82,4 @@ const SellerManagementPage = () => {
   );
 };
 
-export default SellerManagementPage;
+export default AdminManagementPage;
