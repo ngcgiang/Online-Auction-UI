@@ -5,14 +5,6 @@ import apiClient from '@/lib/axios';
  * Handles all product-related API calls
  */
 
-// Get all products with optional pagination
-export const getAllProducts = async (page = 1, pageSize = 10) => {
-  const queryParams = new URLSearchParams();
-  queryParams.append('page', page);
-  queryParams.append('pageSize', pageSize);
-  return apiClient.get(`/api/products?${queryParams.toString()}`);
-};
-
 // Search products with filters and pagination
 export const searchProducts = async (params = {}) => {
   const queryParams = new URLSearchParams();
