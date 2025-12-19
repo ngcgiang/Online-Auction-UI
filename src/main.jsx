@@ -11,8 +11,6 @@ import { OTPVerificationPage } from "./pages/OTPVerificationPage.jsx";
 import { UserProfilePage } from "./pages/UserProfilePage.jsx";
 import {UpdateUserPage} from "./pages/UpdateUserPage.jsx";
 import SellerManagementPage from "./pages/SellerManagementPage.jsx";
-import  SellerManagementPage  from "./pages/SellerManagementPage.jsx";
-import  AdminManagementPage  from "./pages/AdminManagementPage.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { Toast } from  "./components/ui/toast.jsx";
 
@@ -48,8 +46,6 @@ const router = createBrowserRouter([
   {
     path: "/edit-profile",
     element: <UpdateUserPage />,
-    path: "/admin-management",
-    element: <AdminManagementPage />,
   }
 ]);
 

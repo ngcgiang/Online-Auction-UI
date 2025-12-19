@@ -10,7 +10,4 @@ export const getUserProfile = async () => {
 
 export const updateUserProfile = async (data) => {
   return apiClient.patch(`/api/users/update-info`, data);
-// Request user upgrade to seller
-export const requestUserUpgrade = async () => {
-  return apiClient.post(`/api/seller/request-upgrade`);
 }
