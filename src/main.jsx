@@ -9,8 +9,10 @@ import { LoginPage } from "./pages/LoginPage.jsx";
 import { RegisterPage } from "./pages/RegisterPage.jsx";
 import { OTPVerificationPage } from "./pages/OTPVerificationPage.jsx";
 import { UserProfilePage } from "./pages/UserProfilePage.jsx";
+import {UpdateUserPage} from "./pages/UpdateUserPage.jsx";
 import SellerManagementPage from "./pages/SellerManagementPage.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { Toast } from  "./components/ui/toast.jsx";
 
 const router = createBrowserRouter([
   {
@@ -40,15 +42,21 @@ const router = createBrowserRouter([
   {
     path: "/seller-management",
     element: <SellerManagementPage />,
+  },
+  {
+    path: "/edit-profile",
+    element: <UpdateUserPage />,
   }
 ]);
 
 const root = document.getElementById("root");
 
 ReactDOM.createRoot(root).render(
+
   <React.StrictMode>
     <AuthProvider>
       <RouterProvider router={router} />
+      <Toast />
     </AuthProvider>
   </React.StrictMode>,
 );

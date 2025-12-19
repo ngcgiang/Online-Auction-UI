@@ -7,3 +7,7 @@ import apiClient from '@/lib/axios';
 export const getUserProfile = async () => {
   return apiClient.get(`/api/users/profile`);
 }
+
+export const updateUserProfile = async (data) => {
+  return apiClient.patch(`/api/users/update-info`, data);
+}

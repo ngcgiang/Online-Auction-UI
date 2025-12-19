@@ -82,6 +82,12 @@
   --ring: hsl(240 10% 3.9%);
   
   --radius: 0.5rem;
+  
+  /* Toast colors */
+  --toast-success: hsl(142 76% 36%);
+  --toast-error: hsl(0 84.2% 60.2%);
+  --toast-warning: hsl(38 92% 50%);
+  --toast-info: hsl(221 83% 53%);
 }
 
 .dark {
@@ -112,6 +118,12 @@
   --border: hsl(240 3.7% 15.6%);
   --input: hsl(240 3.7% 15.6%);
   --ring: hsl(240 4.9% 83.9%);
+  
+  /* Toast colors for dark mode */
+  --toast-success: hsl(142 76% 36%);
+  --toast-error: hsl(0 72% 51%);
+  --toast-warning: hsl(38 92% 50%);
+  --toast-info: hsl(221 83% 53%);
 }
 
 /* 3. Global Styles */
@@ -122,6 +134,73 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* 4. Toast Styles - Tailwind 4 Compatible */
+.Toastify__toast-container {
+  margin-top: 4rem;
+}
+
+.Toastify__toast {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 1rem;
+}
+
+.Toastify__toast--success {
+  border-left: 4px solid var(--toast-success);
+}
+
+.Toastify__toast--error {
+  border-left: 4px solid var(--toast-error);
+}
+
+.Toastify__toast--warning {
+  border-left: 4px solid var(--toast-warning);
+}
+
+.Toastify__toast--info {
+  border-left: 4px solid var(--toast-info);
+}
+
+.Toastify__toast-body {
+  color: var(--foreground);
+  padding: 0;
+}
+
+.Toastify__progress-bar {
+  height: 3px;
+}
+
+.Toastify__progress-bar--success {
+  background: var(--toast-success);
+}
+
+.Toastify__progress-bar--error {
+  background: var(--toast-error);
+}
+
+.Toastify__progress-bar--warning {
+  background: var(--toast-warning);
+}
+
+.Toastify__progress-bar--info {
+  background: var(--toast-info);
+}
+
+.Toastify__close-button {
+  color: var(--muted-foreground);
+  opacity: 0.7;
+}
+
+.Toastify__close-button:hover {
+  color: var(--foreground);
+  opacity: 1;
 }
 
 .ql-toolbar + .ql-toolbar {
