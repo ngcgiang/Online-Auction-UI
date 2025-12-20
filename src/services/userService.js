@@ -16,3 +16,7 @@ export const requestUserUpgrade = async () => {
 export const updateUserProfile = async (data) => {
   return apiClient.patch(`/api/users/update-info`, data);
 }
+
+export const changeUserPassword = async (data) => {
+  return apiClient.patch(`/api/users/change-password`, data);
+}
