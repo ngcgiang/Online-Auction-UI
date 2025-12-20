@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { Header } from "@/components/Header";
 
-export function UpdateUserPage() {
+export function UpdateUserPage({ onlyProfileTab = false, onlyPasswordTab = false }) {
     const { user: authUser } = useAuth();
-    const [activeTab, setActiveTab] = useState("profile");
+    const [activeTab, setActiveTab] = useState(onlyPasswordTab ? "password" : "profile");
 
     // Form for profile update
     const {
@@ -79,37 +79,42 @@ export function UpdateUserPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background">
-            <Header />
-            <div className="container mx-auto px-4 py-8">
-                <h1 className="text-2xl font-bold mb-6">Quản lý tài khoản</h1>
+        <div className={onlyProfileTab || onlyPasswordTab ? "" : "min-h-screen bg-background"}>
+            {/* Header chỉ hiển thị khi không nhúng */}
+            {!onlyProfileTab && !onlyPasswordTab && <Header />}
+            <div className={onlyProfileTab || onlyPasswordTab ? "" : "container mx-auto px-4 py-8"}>
+                {!onlyProfileTab && !onlyPasswordTab && (
+                    <h1 className="text-2xl font-bold mb-6">Quản lý tài khoản</h1>
+                )}
 
                 {/* Tabs */}
-                <div className="flex border-b mb-6">
-                    <button
-                        onClick={() => setActiveTab("profile")}
-                        className={`px-6 py-3 font-medium transition-colors ${
-                            activeTab === "profile"
-                                ? "border-b-2 border-black text-black"
-                                : "text-gray-500 hover:text-gray-700"
-                        }`}
-                    >
-                        Thông tin cá nhân
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("password")}
-                        className={`px-6 py-3 font-medium transition-colors ${
-                            activeTab === "password"
-                                ? "border-b-2 border-black text-black"
-                                : "text-gray-500 hover:text-gray-700"
-                        }`}
-                    >
-                        Đổi mật khẩu
-                    </button>
-                </div>
+                {!onlyProfileTab && !onlyPasswordTab && (
+                    <div className="flex border-b mb-6">
+                        <button
+                            onClick={() => setActiveTab("profile")}
+                            className={`px-6 py-3 font-medium transition-colors ${
+                                activeTab === "profile"
+                                    ? "border-b-2 border-black text-black"
+                                    : "text-gray-500 hover:text-gray-700"
+                            }`}
+                        >
+                            Thông tin cá nhân
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("password")}
+                            className={`px-6 py-3 font-medium transition-colors ${
+                                activeTab === "password"
+                                    ? "border-b-2 border-black text-black"
+                                    : "text-gray-500 hover:text-gray-700"
+                            }`}
+                        >
+                            Đổi mật khẩu
+                        </button>
+                    </div>
+                )}
 
                 {/* Profile Update Tab */}
-                {activeTab === "profile" && (
+                {(activeTab === "profile" || onlyProfileTab) && !onlyPasswordTab && (
                     <form
                         onSubmit={handleSubmitProfile(onSubmitProfile, onError)}
                         className="max-w-lg mx-auto space-y-6"
@@ -186,7 +191,7 @@ export function UpdateUserPage() {
                 )}
 
                 {/* Password Change Tab */}
-                {activeTab === "password" && (
+                {(activeTab === "password" || onlyPasswordTab) && !onlyProfileTab && (
                     <form
                         onSubmit={handleSubmitPassword(onSubmitPassword, onError)}
                         className="max-w-lg mx-auto space-y-6"
