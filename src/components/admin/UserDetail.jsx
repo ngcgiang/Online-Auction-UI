@@ -202,11 +202,7 @@ const UserDetail = ({ isOpen, onClose, user, onSave }) => {
                       maxLength: {
                         value: 100,
                         message: 'Tên không được vượt quá 100 ký tự',
-                      },
-                      pattern: {
-                        value: /^[a-zA-Z0-9\s\u0100-\u017F\u0180-\u024F]+$/,
-                        message: 'Tên chỉ được chứa chữ cái, số và khoảng trắng',
-                      },
+                      } 
                     })}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
                       getErrorMessage('full_name')

@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { Toast } from "./components/ui/toast";
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import "./index.css";
@@ -12,6 +13,7 @@ import { UserProfilePage } from "./pages/UserProfilePage.jsx";
 import  SellerManagementPage  from "./pages/SellerManagementPage.jsx";
 import  AdminManagementPage  from "./pages/AdminManagementPage.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { UpdateUserPage } from "./pages/UpdateUserPage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -45,6 +47,9 @@ const router = createBrowserRouter([
   {
     path: "/admin-management",
     element: <AdminManagementPage />,
+  },{
+    path: "/edit-profile",
+    element: <UpdateUserPage />,
   }
 ]);
 
@@ -54,6 +59,7 @@ ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <AuthProvider>
       <RouterProvider router={router} />
+      <Toast />
     </AuthProvider>
   </React.StrictMode>,
 );
