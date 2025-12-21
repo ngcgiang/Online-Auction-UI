@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { useAuth } from "@/context/AuthContext"
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import ReactQuill from 'react-quill-new';
@@ -34,6 +36,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import TwoLevelCategorySelector from '@/components/TwoLevelCategorySelector';
+import { createProduct } from '@/services/productService';
 
 // Validation Schema
 const createAuctionProductSchema = z.object({
@@ -97,16 +101,7 @@ const createAuctionProductSchema = z.object({
   }
 });
 
-// Mock categories
-const MOCK_CATEGORIES = [
-  { id: '1', name: 'Điện tử' },
-  { id: '2', name: 'Thời trang' },
-  { id: '3', name: 'Đồ nội thất' },
-  { id: '4', name: 'Xe cộ' },
-  { id: '5', name: 'Bất động sản' },
-  { id: '6', name: 'Sưu tập' },
-  { id: '7', name: 'Khác' },
-];
+
 
 // Format currency display
 const formatCurrency = (value) => {
@@ -133,6 +128,8 @@ const QUILL_FORMATS = [
 ];
 
 const CreateAuctionProduct = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedImages, setSelectedImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -164,28 +161,61 @@ const CreateAuctionProduct = () => {
   const watchPriceStep = watch('price_step');
   const watchBuyNowValue = watch('buy_now_value');
 
-  // Handle image selection
+  // Handle image selection with validation
   const handleImageSelect = useCallback((e) => {
     const files = Array.from(e.target.files || []);
     
-    // Validate max 10 images total
+    // Clear previous message
+    setSubmitMessage(null);
+
+    // Validate file count
     if (selectedImages.length + files.length > 10) {
       setSubmitMessage({
         type: 'error',
-        text: 'Tối đa 10 ảnh',
+        text: 'Tối đa 10 ảnh. Bạn đã chọn ' + selectedImages.length + ' ảnh.',
       });
       return;
     }
 
-    // Create previews
-    const newPreviews = files.map((file) => ({
+    // Validate file type and size
+    const validFiles = [];
+    const errors = [];
+
+    files.forEach((file) => {
+      // Check file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
+      if (!validTypes.includes(file.type)) {
+        errors.push(`${file.name} - Định dạng không được hỗ trợ (chỉ JPEG, PNG, GIF, WebP)`);
+        return;
+      }
+
+      // Check file size (max 5MB)
+      const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSizeInBytes) {
+        errors.push(`${file.name} - Kích thước vượt quá 5MB (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    // Show validation errors if any
+    if (errors.length > 0) {
+      setSubmitMessage({
+        type: 'error',
+        text: 'Lỗi tệp:\n' + errors.join('\n'),
+      });
+      return;
+    }
+
+    // Create previews for valid files
+    const newPreviews = validFiles.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
     }));
 
-    setSelectedImages((prev) => [...prev, ...files]);
+    setSelectedImages((prev) => [...prev, ...validFiles]);
     setImagePreviews((prev) => [...prev, ...newPreviews]);
-    setSubmitMessage(null);
   }, [selectedImages]);
 
   // Remove image from selection
@@ -222,58 +252,62 @@ const CreateAuctionProduct = () => {
       // Append text fields
       submitData.append('product_name', formData.product_name);
       submitData.append('category_id', formData.category_id);
-      submitData.append('start_value', Number(formData.start_value));
-      submitData.append('price_step', Number(formData.price_step));
+      submitData.append('start_price', Number(formData.start_value));
+      submitData.append('step_price', Number(formData.price_step));
       if (formData.buy_now_value) {
-        submitData.append('buy_now_value', Number(formData.buy_now_value));
+        submitData.append('buy_now_price', Number(formData.buy_now_value));
       }
       submitData.append('description', formData.description);
       submitData.append('end_time', formData.end_time);
-      submitData.append('permission', formData.permission);
+      submitData.append('allow_new_users', formData.permission);
 
       // Append hidden fields
       submitData.append('start_time', new Date().toISOString());
-      submitData.append('seller_id', '1'); // TODO: Replace with actual seller_id from auth
+      submitData.append('seller_id', user.user_id); // TODO: Replace with actual seller_id from auth
       submitData.append('status', 'active');
 
       // Append images
       selectedImages.forEach((file) => {
+        console.log('Appending image file:', file);
         submitData.append('images', file);
       });
+console.log('Nội dung FormData:', Array.from(submitData.entries()));      // Make API request using product service
+      const response = await createProduct(submitData);
+      console.log('Create product response:', response);
 
-      // Make API request
-      // const response = await axios.post('/api/products/create', submitData, {
-      //   headers: {
-      //     'Content-Type': 'multipart/form-data',
-      //   },
-      // });
+      // Check if response is successful
+      if (response.data?.success) {
+        setSubmitMessage({
+          type: 'success',
+          text: response.data?.message || 'Sản phẩm đấu giá được tạo thành công! Đang chuyển hướng...',
+        });
 
-      // Mock successful response (remove in production)
-      console.log('FormData contents:');
-      Array.from(submitData.entries()).forEach(([key, value]) => {
-        if (value instanceof File) {
-          console.log(`${key}: File(${value.name})`);
-        } else {
-          console.log(`${key}: ${value}`);
-        }
-      });
-
-      setSubmitMessage({
-        type: 'success',
-        text: 'Sản phẩm đấu giá được tạo thành công! Đang chuyển hướng...',
-      });
-
-      // Reset form and images
-      setTimeout(() => {
-        reset();
-        setSelectedImages([]);
-        setImagePreviews([]);
-        // TODO: Navigate to seller management page
-      }, 1500);
+        // Reset form and images after 1.5 seconds
+        setTimeout(() => {
+          reset();
+          setSelectedImages([]);
+          setImagePreviews([]);
+          // TODO: Navigate to seller management page or product detail page
+          navigate(`/products/${response.data.data.product_id}`);
+        }, 1500);
+      } else {
+        setSubmitMessage({
+          type: 'error',
+          text: response.data?.message || 'Có lỗi khi tạo sản phẩm',
+        });
+      }
     } catch (error) {
+      console.error('Error creating product:', error);
+      
+      // Extract error message from API response
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.message || 
+        'Có lỗi khi tạo sản phẩm. Vui lòng thử lại.';
+      
       setSubmitMessage({
         type: 'error',
-        text: error.response?.data?.message || 'Có lỗi khi tạo sản phẩm',
+        text: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -349,41 +383,11 @@ const CreateAuctionProduct = () => {
                 )}
               </div>
 
-              {/* Category */}
-              <div className="space-y-2">
-                <Label htmlFor="category" className="text-base font-medium">
-                  Danh mục <span className="text-red-500">*</span>
-                </Label>
-                <Controller
-                  name="category_id"
-                  control={control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger
-                        id="category"
-                        className={
-                          errors.category_id ? 'border-red-500' : ''
-                        }
-                      >
-                        <SelectValue placeholder="Chọn danh mục" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {MOCK_CATEGORIES.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.category_id && (
-                  <p className="text-sm text-red-500 flex items-center gap-1">
-                    <AlertCircle className="h-4 w-4" />
-                    {errors.category_id.message}
-                  </p>
-                )}
-              </div>
+          {/* Category */}
+          <TwoLevelCategorySelector
+            control={control}
+            errors={errors}
+          />
             </CardContent>
           </Card>
 
@@ -525,7 +529,7 @@ const CreateAuctionProduct = () => {
             <CardHeader>
               <CardTitle>Ảnh sản phẩm</CardTitle>
               <CardDescription>
-                Tải lên tối thiểu 3 ảnh (tối đa 10 ảnh)
+                Tải lên tối thiểu 3 ảnh (tối đa 10 ảnh, mỗi ảnh ≤ 5MB)
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -542,7 +546,7 @@ const CreateAuctionProduct = () => {
                         Nhấp để chọn ảnh hoặc kéo thả
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        PNG, JPG, GIF (Tối đa 5MB mỗi ảnh)
+                        JPEG, PNG, GIF, WebP (Mỗi ảnh tối đa 5MB)
                       </p>
                     </div>
                   </div>
@@ -550,7 +554,7 @@ const CreateAuctionProduct = () => {
                     id="images"
                     type="file"
                     multiple
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/gif,image/webp,image/jpg"
                     onChange={handleImageSelect}
                     className="hidden"
                   />
@@ -571,6 +575,13 @@ const CreateAuctionProduct = () => {
                 >
                   {selectedImages.length >= 3 ? '✓ Đủ' : `Cần ${3 - selectedImages.length} ảnh`}
                 </span>
+              </div>
+
+              {/* Validation Info */}
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-xs text-blue-800">
+                  <strong>Yêu cầu:</strong> Chọn 3-10 ảnh, định dạng JPEG/PNG/GIF/WebP, mỗi ảnh tối đa 5MB
+                </p>
               </div>
 
               {/* Image Previews */}
@@ -651,7 +662,7 @@ const CreateAuctionProduct = () => {
                     <p className="text-sm text-muted-foreground">
                       {watch('permission')
                         ? 'Mọi người đều có thể thấy sản phẩm này'
-                        : 'Chỉ những người có link mới có thể thấy'}
+                        : 'Chỉ những người có điểm rating trên 80% mới có quyền ra giá'}
                     </p>
                   </div>
                 </div>

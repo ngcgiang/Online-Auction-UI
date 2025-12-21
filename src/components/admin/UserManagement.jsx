@@ -453,9 +453,6 @@ const UserManagement = () => {
                           Vai Trò Hiện Tại
                         </th>
                         <th className="text-left px-4 py-3 font-medium text-sm">
-                          Ngày Yêu Cầu
-                        </th>
-                        <th className="text-left px-4 py-3 font-medium text-sm">
                           Trạng Thái
                         </th>
                         <th className="text-right px-4 py-3 font-medium text-sm">
@@ -477,11 +474,6 @@ const UserManagement = () => {
                           </td>
                           <td className="px-4 py-3 text-sm">
                             {getRoleBadge(request.role)}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground">
-                            {new Date(request.request_date).toLocaleDateString(
-                              'vi-VN'
-                            )}
                           </td>
                           <td className="px-4 py-3 text-sm">
                             {getStatusBadge(request.status)}

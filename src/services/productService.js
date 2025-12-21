@@ -62,8 +62,15 @@ export const getProductDetails = async (productId) => {
 };
 
 // Create new product (requires seller role)
-export const createProduct = async (productData) => {
-  return apiClient.post('/api/products', productData);
+// export const createProduct... (tên hàm của bạn)
+export const createProduct = async (formData) => {
+  // Tham số thứ 3 của axios.post là config object
+  return apiClient.post('/api/products', formData, {
+    headers: {
+      // QUAN TRỌNG: Dòng này sẽ ghi đè 'application/json' mặc định
+      'Content-Type': 'multipart/form-data', 
+    },
+  });
 };
 
 // Append product description (seller only)
