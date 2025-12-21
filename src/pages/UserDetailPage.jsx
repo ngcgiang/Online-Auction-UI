@@ -6,6 +6,16 @@ import { Heart, Clock, DollarSign, Eye, Loader2 } from "lucide-react"
 import { getWatchList } from "@/services/userService"
 import { toast } from "react-toastify"
 import { useNavigate } from "react-router"
+import { ProductCard, ProductCardSkeleton } from "@/components/ProductCard"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination"
 
 export function UserDetailPage() {
     const { user: authUser } = useAuth()
@@ -13,6 +23,12 @@ export function UserDetailPage() {
     const [watchList, setWatchList] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [pagination, setPagination] = useState({
+        currentPage: 1,
+        pageSize: 12,
+        totalPages: 1,
+        totalItems: 0,
+    });
 
     useEffect(() => {
         const fetchWatchList = async () => {
@@ -31,8 +47,14 @@ export function UserDetailPage() {
                 } else if (Array.isArray(response)) {
                     products = response
                 }
-                
-                console.log("Products:", products)
+                // Pagination logic
+                const totalItems = products.length
+                const totalPages = Math.ceil(totalItems / pagination.pageSize)
+                setPagination((prev) => ({
+                    ...prev,
+                    totalItems,
+                    totalPages: totalPages || 1,
+                }))
                 setWatchList(products)
             } catch (err) {
                 console.error("Error fetching watchlist:", err)
@@ -48,7 +70,98 @@ export function UserDetailPage() {
         if (authUser) {
             fetchWatchList()
         }
+    // eslint-disable-next-line
     }, [authUser])
+
+    // Pagination: get current page products
+    const paginatedProducts = watchList.slice(
+        (pagination.currentPage - 1) * pagination.pageSize,
+        pagination.currentPage * pagination.pageSize
+    )
+
+    const handlePageChange = (page) => {
+        if (page >= 1 && page <= pagination.totalPages) {
+            setPagination((prev) => ({ ...prev, currentPage: page }))
+            window.scrollTo({ top: 0, behavior: "smooth" })
+        }
+    }
+
+    const renderPaginationItems = () => {
+        const items = []
+        const { currentPage, totalPages } = pagination
+        const maxVisible = 5
+
+        if (totalPages <= maxVisible) {
+            for (let i = 1; i <= totalPages; i++) {
+                items.push(
+                    <PaginationItem key={i}>
+                        <PaginationLink
+                            isActive={currentPage === i}
+                            onClick={() => handlePageChange(i)}
+                        >
+                            {i}
+                        </PaginationLink>
+                    </PaginationItem>
+                )
+            }
+        } else {
+            items.push(
+                <PaginationItem key={1}>
+                    <PaginationLink
+                        isActive={currentPage === 1}
+                        onClick={() => handlePageChange(1)}
+                    >
+                        1
+                    </PaginationLink>
+                </PaginationItem>
+            )
+
+            if (currentPage > 3) {
+                items.push(
+                    <PaginationItem key="ellipsis-start">
+                        <PaginationEllipsis />
+                    </PaginationItem>
+                )
+            }
+
+            const start = Math.max(2, currentPage - 1)
+            const end = Math.min(totalPages - 1, currentPage + 1)
+
+            for (let i = start; i <= end; i++) {
+                items.push(
+                    <PaginationItem key={i}>
+                        <PaginationLink
+                            isActive={currentPage === i}
+                            onClick={() => handlePageChange(i)}
+                        >
+                            {i}
+                        </PaginationLink>
+                    </PaginationItem>
+                )
+            }
+
+            if (currentPage < totalPages - 2) {
+                items.push(
+                    <PaginationItem key="ellipsis-end">
+                        <PaginationEllipsis />
+                    </PaginationItem>
+                )
+            }
+
+            items.push(
+                <PaginationItem key={totalPages}>
+                    <PaginationLink
+                        isActive={currentPage === totalPages}
+                        onClick={() => handlePageChange(totalPages)}
+                    >
+                        {totalPages}
+                    </PaginationLink>
+                </PaginationItem>
+            )
+        }
+
+        return items
+    }
 
     const handleViewProduct = (productId) => {
         navigate(`/products/${productId}`)
@@ -107,70 +220,54 @@ export function UserDetailPage() {
                     </CardContent>
                 </Card>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {watchList.map((item) => {
-                        const product = item.product || item // Handle nested product object
-                        return (
-                            <Card key={item.product_id || product.product_id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                                <div className="relative aspect-square">
-                                    <img
-                                        src={product.image_url || product.images?.[0] || "/placeholder-image.jpg"}
-                                        alt={product.product_name || "Product"}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            e.target.src = "/placeholder-image.jpg"
-                                        }}
+                <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {loading
+                            ? [...Array(pagination.pageSize)].map((_, idx) => (
+                                <ProductCardSkeleton key={idx} />
+                            ))
+                            : paginatedProducts.map((item) => {
+                                const product = item.product || item
+                                return (
+                                    <ProductCard
+                                        key={item.product_id || product.product_id}
+                                        product={product}
+                                        // Optionally pass more props if needed
                                     />
-                                    <div className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md">
-                                        <Heart className="h-5 w-5 fill-red-500 text-red-500" />
-                                    </div>
-                                </div>
-                                <CardContent className="p-4">
-                                    <h3 className="font-semibold text-lg mb-2 line-clamp-2">
-                                        {product.product_name || "Sản phẩm"}
-                                    </h3>
-                                    
-                                    <div className="space-y-2 mb-4">
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <DollarSign className="h-4 w-4 text-muted-foreground" />
-                                            <span className="text-muted-foreground">Giá hiện tại:</span>
-                                            <span className="font-semibold text-primary">
-                                                {formatPrice(product.current_price || product.starting_price)}
-                                            </span>
-                                        </div>
-                                        
-                                        {product.end_time && (
-                                            <div className="flex items-center gap-2 text-sm">
-                                                <Clock className="h-4 w-4 text-muted-foreground" />
-                                                <span className="text-muted-foreground">Kết thúc:</span>
-                                                <span className="text-sm">
-                                                    {formatDate(product.end_time)}
-                                                </span>
-                                            </div>
-                                        )}
-                                        
-                                        {product.bid_count !== undefined && (
-                                            <div className="flex items-center gap-2 text-sm">
-                                                <Eye className="h-4 w-4 text-muted-foreground" />
-                                                <span className="text-muted-foreground">
-                                                    {product.bid_count} lượt đấu giá
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <Button 
-                                        onClick={() => handleViewProduct(item.product_id || product.product_id)}
-                                        className="w-full"
-                                        variant="outline"
-                                    >
-                                        Xem chi tiết
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        )
-                    })}
-                </div>
+                                )
+                            })}
+                    </div>
+                    {/* Pagination */}
+                    {pagination.totalPages > 1 && (
+                        <div className="mt-8 flex justify-center">
+                            <Pagination>
+                                <PaginationContent>
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            onClick={() => handlePageChange(pagination.currentPage - 1)}
+                                            className={
+                                                pagination.currentPage === 1
+                                                    ? "pointer-events-none opacity-50"
+                                                    : "cursor-pointer"
+                                            }
+                                        />
+                                    </PaginationItem>
+                                    {renderPaginationItems()}
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            onClick={() => handlePageChange(pagination.currentPage + 1)}
+                                            className={
+                                                pagination.currentPage === pagination.totalPages
+                                                    ? "pointer-events-none opacity-50"
+                                                    : "cursor-pointer"
+                                            }
+                                        />
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     )
