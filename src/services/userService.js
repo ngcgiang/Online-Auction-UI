@@ -20,3 +20,19 @@ export const updateUserProfile = async (data) => {
 export const changeUserPassword = async (data) => {
   return apiClient.patch(`/api/users/change-password`, data);
 }
+
+export const getUserRatings = async () => {
+  return apiClient.get(`/api/users/ratings`);
+}
+
+export const getWatchList = async () => {
+  return apiClient.get(`/api/users/watchlist`);
+}
+
+export const getBiddedProducts = async () => {
+  return apiClient.get(`/api/users/bidded-product`);
+}
+
+export const getWonProducts = async () => {
+  return apiClient.get(`/api/users/won-products`);
+}
