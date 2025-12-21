@@ -55,14 +55,16 @@ const UserDetail = ({ isOpen, onClose, user, onSave }) => {
       setSaveMessage(null);
       
       const updateData = {
+        user_id: formData.user_id,
         full_name: formData.full_name,
         email: formData.email,
         address: formData.address,
         dob: formData.dob || null,
         role: formData.role,
       };
-
-      await updateUser(user.user_id, updateData);
+      console.log("updateData:",updateData);
+      // FIX: Only pass updateData, not user.user_id as first argument
+      await updateUser(updateData);
 
       setSaveMessage({
         type: 'success',
@@ -143,6 +145,8 @@ const UserDetail = ({ isOpen, onClose, user, onSave }) => {
 
         {/* Content */}
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+          {/* Hidden input for user_id */}
+          <input type="hidden" {...register('user_id')} value={user.user_id} />
           {/* Save Message Alert */}
           {saveMessage && (
             <div
@@ -194,7 +198,7 @@ const UserDetail = ({ isOpen, onClose, user, onSave }) => {
                   <input
                     type="text"
                     {...register('full_name', {
-                      required: 'Tên đầy đủ không được để trống',
+                      //required: 'Tên đầy đủ không được để trống',
                       minLength: {
                         value: 3,
                         message: 'Tên phải có ít nhất 3 ký tự',
@@ -233,7 +237,7 @@ const UserDetail = ({ isOpen, onClose, user, onSave }) => {
                   <input
                     type="email"
                     {...register('email', {
-                      required: 'Email không được để trống',
+                      
                       pattern: {
                         value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                         message: 'Email không hợp lệ',

@@ -32,8 +32,8 @@ export const deleteUser = async (userId) => {
 }
 
 /** Update user */
-export const updateUser = async (userId, userData) => {
-    return apiClient.patch(`/api/admin/update-user/${userId}`, userData);
+export const updateUser = async (userData) => {
+    return apiClient.patch(`/api/admin/update-user-info/`, userData);
 }
 
 /** Create new category */
