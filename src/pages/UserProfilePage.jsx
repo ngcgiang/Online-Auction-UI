@@ -9,6 +9,7 @@ import { getUserProfile } from "@/services/userService"
 import { UserProfile } from "@/components/UserProfile"
 import { Header } from "@/components/Header"
 import { UpdateUserPage } from "./UpdateUserPage"
+import { UserDetailPage } from "./UserDetailPage"
 
 export function UserProfilePage() {
   const navigate = useNavigate()
@@ -137,6 +138,11 @@ export function UserProfilePage() {
               {activeTab === "password" && (
                 <div className="bg-white rounded-xl shadow-sm border p-6">
                   <UpdateUserPage onlyPasswordTab />
+                </div>
+              )}
+              {activeTab === "watchlist" && (
+                <div className="bg-white rounded-xl shadow-sm border p-6">
+                  <UserDetailPage detailType="watchlist" />
                 </div>
               )}
               {error && (
