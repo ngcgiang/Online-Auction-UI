@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuth } from "@/context/AuthContext"
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import ReactQuill from 'react-quill-new';
@@ -140,6 +140,7 @@ const CreateAuctionProduct = () => {
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
     reset,
   } = useForm({
@@ -153,7 +154,7 @@ const CreateAuctionProduct = () => {
       buy_now_value: '',
       description: '',
       end_time: '',
-      permission: false,
+      permission: true,
     },
   });
 
@@ -276,10 +277,10 @@ console.log('Nội dung FormData:', Array.from(submitData.entries()));      // M
       console.log('Create product response:', response);
 
       // Check if response is successful
-      if (response.data?.success) {
+      if (response.success) {
         setSubmitMessage({
           type: 'success',
-          text: response.data?.message || 'Sản phẩm đấu giá được tạo thành công! Đang chuyển hướng...',
+          text: response.message || 'Sản phẩm đấu giá được tạo thành công! Đang chuyển hướng...',
         });
 
         // Reset form and images after 1.5 seconds
@@ -288,12 +289,12 @@ console.log('Nội dung FormData:', Array.from(submitData.entries()));      // M
           setSelectedImages([]);
           setImagePreviews([]);
           // TODO: Navigate to seller management page or product detail page
-          navigate(`/products/${response.data.data.product_id}`);
+          navigate(`/product/${response.data.product_id}`);
         }, 1500);
       } else {
         setSubmitMessage({
           type: 'error',
-          text: response.data?.message || 'Có lỗi khi tạo sản phẩm',
+          text: response.message || 'Có lỗi khi tạo sản phẩm',
         });
       }
     } catch (error) {
@@ -650,6 +651,7 @@ console.log('Nội dung FormData:', Array.from(submitData.entries()));      // M
               {/* Permission Toggle */}
               <div className="flex items-center justify-between p-4 bg-accent rounded-lg">
                 <div className="flex items-center gap-3">
+                  {/* Phần hiển thị icon và text giữ nguyên */}
                   {watch('permission') ? (
                     <Eye className="h-5 w-5 text-emerald-600" />
                   ) : (
@@ -657,12 +659,12 @@ console.log('Nội dung FormData:', Array.from(submitData.entries()));      // M
                   )}
                   <div>
                     <p className="font-medium text-foreground">
-                      {watch('permission') ? 'Công khai' : 'Không công khai'}
+                      {watch('permission') ? 'Công khai' : 'Hạn chế'}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {watch('permission')
-                        ? 'Mọi người đều có thể thấy sản phẩm này'
-                        : 'Chỉ những người có điểm rating trên 80% mới có quyền ra giá'}
+                        ? 'Cho phép tất cả mọi người tham gia ra giá'
+                        : 'Chỉ cho phép người dùng có điểm đánh giá trên 80%'}
                     </p>
                   </div>
                 </div>
@@ -670,8 +672,10 @@ console.log('Nội dung FormData:', Array.from(submitData.entries()));      // M
                   type="button"
                   onClick={() => {
                     const currentValue = watch('permission');
-                    register('permission').onChange({
-                      target: { value: !currentValue },
+                    // Sử dụng setValue để cập nhật giá trị
+                    setValue('permission', !currentValue, { 
+                      shouldValidate: true, // Kiểm tra lỗi ngay lập tức (nếu có validate)
+                      shouldDirty: true     // Đánh dấu form đã bị thay đổi
                     });
                   }}
                   className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
@@ -686,6 +690,9 @@ console.log('Nội dung FormData:', Array.from(submitData.entries()));      // M
                     }`}
                   />
                 </button>
+                
+                {/* QUAN TRỌNG: Cần một input ẩn để đăng ký field này vào form nếu chưa dùng Controller */}
+                <input type="hidden" {...register('permission')} />
               </div>
             </CardContent>
           </Card>
