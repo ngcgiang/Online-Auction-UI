@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ChevronRight, User, Edit, KeyRound, Menu, X } from "lucide-react"
+import { ArrowLeft, ChevronRight, User, Edit, KeyRound, Menu, X, ShoppingCart, Heart,MessageCircleMore } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { getUserProfile } from "@/services/userService"
 import { UserProfile } from "@/components/UserProfile"
@@ -55,6 +55,21 @@ export function UserProfilePage() {
       label: "Đổi mật khẩu",
       icon: KeyRound,
     },
+    {
+      key: "watchlist",
+      label: "Danh sách sản phẩm đang theo dõi",
+      icon: Heart,
+    },
+    {
+      key: "bidded-products",
+      label: "Danh sách sản phẩm đã tham gia đấu giá",
+      icon: ShoppingCart,
+    },
+    {
+      key: "ratings",
+      label: "Danh sách đánh giá vể người dùng",
+      icon: MessageCircleMore,
+    }
   ]
 
   return (
