@@ -11,6 +11,7 @@ import { Header } from "@/components/Header"
 import { UpdateUserPage } from "./UpdateUserPage"
 import { UserWatchListPage } from "./UserWatchListPage"
 import { UserBiddedProductsPage } from "./UserBiddedPage"
+import { UserRatingsPage } from "./UserRatingsPage"
 
 export function UserProfilePage() {
   const navigate = useNavigate()
@@ -149,6 +150,11 @@ export function UserProfilePage() {
               {activeTab === "bidded-products" && (
                 <div className="bg-white rounded-xl shadow-sm border p-6">
                   <UserBiddedProductsPage />
+                </div>
+              )}
+              {activeTab === "ratings" && (
+                <div className="bg-white rounded-xl shadow-sm border p-6">
+                  <UserRatingsPage />
                 </div>
               )}
 
