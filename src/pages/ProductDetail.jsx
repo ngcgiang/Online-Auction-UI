@@ -17,9 +17,11 @@ import { Heart, Star, Clock, User, Gavel, ArrowLeft, Send, AlertCircle, CheckCir
 import { formatPrice, getProductDetails, getProductQnA, getRelatedProducts } from "@/services/productService";
 import { getBidsByProductId, placeBid } from "@/services/bidService";
 import { addToWatchList, removeFromWatchList, getWatchListByUserId } from "@/services/watchListService";
+import { getBiddersByProductId } from "@/services/sellerService";
 import { QnAThread } from "@/components/QnAThread";
 import AddProductDescription from "@/components/AddProductDescription";
 import ProductDescriptionList from "@/components/ProductDescriptionList";
+import BidderList from "@/components/BidderList";
 import { useProductSocket } from "@/hooks/useProductSocket";
 import { formatTimeRemaining } from "@/lib/socket";
 import { Header } from "@/components/Header";
@@ -44,6 +46,8 @@ export function ProductDetail() {
   const [relatedLoading, setRelatedLoading] = useState(true);
   const [bidHistory, setBidHistory] = useState([]);
   const [bidLoading, setBidLoading] = useState(true);
+  const [bidders, setBidders] = useState([]);
+  const [biddersLoading, setBiddersLoading] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState("--:--:--");
   const [isConfirmingBid, setIsConfirmingBid] = useState(false);
@@ -304,6 +308,32 @@ export function ProductDetail() {
 
     fetchBids();
   }, [productId]);
+
+  // Fetch bidders for seller view
+  useEffect(() => {
+    if (!productId || !user?.user_id || user?.user_id !== product?.seller?.user_id) {
+      setBidders([]);
+      return;
+    }
+
+    const fetchBidders = async () => {
+      setBiddersLoading(true);
+      try {
+        const response = await getBiddersByProductId(productId);
+
+        if (response.success && Array.isArray(response.data)) {
+          setBidders(response.data);
+        }
+      } catch (err) {
+        console.error("Error fetching bidders:", err);
+        setBidders([]);
+      } finally {
+        setBiddersLoading(false);
+      }
+    };
+
+    fetchBidders();
+  }, [productId, user?.user_id, product?.seller?.user_id]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -581,42 +611,60 @@ export function ProductDetail() {
               </div>
             )}
 
-            {/* Bidding Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Gavel className="h-4 w-4" />
-                  Đấu giá
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <BidInput
-                  currentPrice={product.current_price || 0}
-                  stepPrice={parseFloat(product.price_step) || 0}
-                  placeBid={handlePlaceBid}
-                />
-              </CardContent>
-            </Card>
+            {user?.user_id !== product.seller.user_id && (
+              <>
+                {/* Bidding Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Gavel className="h-4 w-4" />
+                      Đấu giá
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <BidInput
+                      currentPrice={product.current_price || 0}
+                      stepPrice={parseFloat(product.price_step) || 0}
+                      placeBid={handlePlaceBid}
+                    />
+                  </CardContent>
+                </Card>
 
-            {/* Buy Now Section */}
-            {product.buy_now_value && (
-              <Card className="border-primary/20 bg-primary/5">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Giá mua ngay
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {formatPrice(parseFloat(product.buy_now_value))}
-                      </p>
-                    </div>
-                    <Button onClick={handleBuyNow} size="lg" variant="default">
-                      Mua ngay
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                {/* Buy Now Section */}
+                {product.buy_now_value && (
+                  <Card className="border-primary/20 bg-primary/5">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            Giá mua ngay
+                          </p>
+                          <p className="text-2xl font-bold">
+                            {formatPrice(parseFloat(product.buy_now_value))}
+                          </p>
+                        </div>
+                        <Button onClick={handleBuyNow} size="lg" variant="default">
+                          Mua ngay
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
+            {user?.user_id === product.seller.user_id && (  
+              <>
+                {/* Bidder list section for seller*/
+                console.log("Rendering BidderList with bidders:", bidders)}
+                <BidderList
+                  productId={productId}
+                  bidders={bidders}
+                  onBidderRemoved={(bidderId) => {
+                    // Update local state when a bidder is removed
+                    setBidders(bidders.filter(b => b.bidder_id !== bidderId));
+                  }}
+                />
+              </>
             )}
 
             {/* Meta Info */}
