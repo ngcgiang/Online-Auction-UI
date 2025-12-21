@@ -13,11 +13,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Heart, Star, Clock, User, Gavel, ArrowLeft, Send, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Heart, Star, Clock, User, Gavel, ArrowLeft, Send, AlertCircle, CheckCircle2, Pencil } from "lucide-react";
 import { formatPrice, getProductDetails, getProductQnA, getRelatedProducts } from "@/services/productService";
 import { getBidsByProductId, placeBid } from "@/services/bidService";
 import { addToWatchList, removeFromWatchList, getWatchListByUserId } from "@/services/watchListService";
 import { QnAThread } from "@/components/QnAThread";
+import AddProductDescription from "@/components/AddProductDescription";
+import ProductDescriptionList from "@/components/ProductDescriptionList";
 import { useProductSocket } from "@/hooks/useProductSocket";
 import { formatTimeRemaining } from "@/lib/socket";
 import { Header } from "@/components/Header";
@@ -46,6 +48,7 @@ export function ProductDetail() {
   const [timeRemaining, setTimeRemaining] = useState("--:--:--");
   const [isConfirmingBid, setIsConfirmingBid] = useState(false);
   const [pendingBidAmount, setPendingBidAmount] = useState(null);
+  const [showAddDescription, setShowAddDescription] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -120,6 +123,14 @@ export function ProductDetail() {
     } finally {
       setWishlistLoading(false);
     }
+  };
+
+  const handleAddDescriptionSuccess = (newDescription) => {
+    setProduct((prevProduct) => ({
+      ...prevProduct,
+      // Thêm description mới vào đầu danh sách (hoặc cuối tùy bạn)
+      descriptions: [...(prevProduct.descriptions || []), newDescription]
+    }));
   };
 
   // Handle bid submission with authentication check
@@ -701,31 +712,20 @@ export function ProductDetail() {
           </div>
         </div>
 
-        {/* BOTTOM SECTION: Description */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Mô tả chi tiết sản phẩm</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {product.descriptions && product.descriptions.length > 0 ? (
-              <div className="space-y-6">
-                {product.descriptions.map((desc) => (
-                  <div key={desc.des_id} className="border-l-4 border-primary/20 pl-4">
-                    <div
-                      className="prose prose-slate max-w-none text-foreground"
-                      dangerouslySetInnerHTML={{ __html: desc.description }}
-                    />
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Cập nhật: {formatDate(desc.created_at)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground">Chưa có mô tả chi tiết</p>
-            )}
-          </CardContent>
-        </Card>
+        <AddProductDescription
+          productId={productId}
+          isOpen={showAddDescription}
+          onClose={() => setShowAddDescription(false)}
+          onSuccess={handleAddDescriptionSuccess}
+        />
+
+        {/* SECTION: Description - Using ProductDescriptionList Component */}
+        <ProductDescriptionList
+          descriptions={product?.descriptions || []}
+          isOwner={user && user.user_id === product?.seller.user_id}
+          onEdit={() => setShowAddDescription(true)}
+          formatDate={formatDate}
+        />
 
         {/* Q&A SECTION */}
         <Card>
