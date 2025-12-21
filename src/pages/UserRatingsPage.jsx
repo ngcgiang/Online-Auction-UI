@@ -72,7 +72,7 @@ export function UserRatingsPage() {
     // Filter ratings based on selected filter
     const filteredRatings = ratings.filter(rating => {
         if (filter === "positive") return rating.rating_point === 1
-        if (filter === "negative") return rating.rating_point === 0
+        if (filter === "negative") return rating.rating_point === -1
         return true
     })
 
