@@ -2,11 +2,10 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/context/AuthContext"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Heart, Clock, DollarSign, Eye, Loader2 } from "lucide-react"
+import { Heart, Clock, DollarSign, Calendar, Gavel, Loader2 } from "lucide-react"
 import { getWatchList } from "@/services/userService"
 import { toast } from "react-toastify"
 import { useNavigate } from "react-router"
-import { ProductCard, ProductCardSkeleton } from "@/components/ProductCard"
 import {
   Pagination,
   PaginationContent,
@@ -17,7 +16,7 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination"
 
-export function UserDetailPage() {
+export function UserWatchListPage() {
     const { user: authUser } = useAuth()
     const navigate = useNavigate()
     const [watchList, setWatchList] = useState([])
@@ -38,7 +37,6 @@ export function UserDetailPage() {
                 const response = await getWatchList()
                 console.log("WatchList Response:", response)
                 
-                // Lấy data từ response.data.list
                 let products = []
                 if (response?.data?.list && Array.isArray(response.data.list)) {
                     products = response.data.list
@@ -47,7 +45,7 @@ export function UserDetailPage() {
                 } else if (Array.isArray(response)) {
                     products = response
                 }
-                // Pagination logic
+                
                 const totalItems = products.length
                 const totalPages = Math.ceil(totalItems / pagination.pageSize)
                 setPagination((prev) => ({
@@ -70,10 +68,8 @@ export function UserDetailPage() {
         if (authUser) {
             fetchWatchList()
         }
-    // eslint-disable-next-line
-    }, [authUser])
+    }, [authUser, pagination.pageSize])
 
-    // Pagination: get current page products
     const paginatedProducts = watchList.slice(
         (pagination.currentPage - 1) * pagination.pageSize,
         pagination.currentPage * pagination.pageSize
@@ -175,6 +171,46 @@ export function UserDetailPage() {
         }).format(price)
     }
 
+    const formatDate = (dateString) => {
+        if (!dateString) return "Invalid Date"
+        const date = new Date(dateString)
+        return date.toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+        })
+    }
+
+    const getTimeRemaining = (endTime) => {
+        if (!endTime) return "Đã kết thúc"
+        
+        const now = new Date()
+        const end = new Date(endTime)
+        const diff = end - now
+
+        if (diff <= 0) return "Đã kết thúc"
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+        if (days > 0) {
+            return `${days} ngày ${hours} giờ`
+        } else if (hours > 0) {
+            return `${hours} giờ ${minutes} phút`
+        } else {
+            return `${minutes} phút`
+        }
+    }
+
+    const getHighestBidder = (product) => {
+        // Adjust based on your API structure
+        return product.highest_bidder_name || product.current_bidder || "Chưa có"
+    }
+
+    const getBidCount = (product) => {
+        return product.bid_count || product.total_bids || 0
+    }
 
     if (loading) {
         return (
@@ -212,21 +248,104 @@ export function UserDetailPage() {
             ) : (
                 <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {loading
-                            ? [...Array(pagination.pageSize)].map((_, idx) => (
-                                <ProductCardSkeleton key={idx} />
-                            ))
-                            : paginatedProducts.map((item) => {
-                                const product = item.product || item
-                                return (
-                                    <ProductCard
-                                        key={item.product_id || product.product_id}
-                                        product={product}
-                                        // Optionally pass more props if needed
-                                    />
-                                )
-                            })}
+                        {paginatedProducts.map((item) => {
+                            const product = item.product || item
+                            const isEnded = new Date(product.end_time) <= new Date()
+                            
+                            return (
+                                <Card 
+                                    key={item.product_id || product.product_id} 
+                                    className="overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full"
+                                >
+                                    {/* Image Section */}
+                                    <div className="relative aspect-square bg-gray-100">
+                                        <img
+                                            src={product.image_url || product.images?.[0] || "/placeholder-image.jpg"}
+                                            alt={product.product_name || "Product"}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.target.src = "/placeholder-image.jpg"
+                                            }}
+                                        />
+                                        <div className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-lg hover:scale-110 transition-transform">
+                                            <Heart className="h-5 w-5 fill-red-500 text-red-500" />
+                                        </div>
+                                        {product.category?.category_name && (
+                                            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
+                                                <span className="text-xs font-medium text-gray-700">
+                                                    {product.category.category_name}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Content Section */}
+                                    <CardContent className="p-4 flex flex-col flex-grow">
+                                        {/* Title */}
+                                        <h3 className="font-semibold text-lg mb-3 line-clamp-2 min-h-[56px]">
+                                            {product.product_name || "Sản phẩm"}
+                                        </h3>
+                                        
+                                        {/* Status Badge */}
+                                        <div className="mb-3">
+                                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                                                isEnded 
+                                                    ? "bg-red-100 text-red-600" 
+                                                    : "bg-green-100 text-green-700"
+                                            }`}>
+                                                {isEnded ? "Đã kết thúc" : "Đang diễn ra"}
+                                            </span>
+                                        </div>
+
+                                        {/* Price */}
+                                        <div className="mb-4">
+                                            <div className="text-2xl font-bold text-primary">
+                                                {formatPrice(product.current_price || product.starting_price)}
+                                            </div>
+                                        </div>
+
+                                        {/* Details Grid */}
+                                        <div className="space-y-2 mb-4 flex-grow">
+
+                                            {/* End Date */}
+                                            <div className="flex items-start gap-2 text-sm">
+                                                <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                                                <div className="flex-1 min-w-0">
+                                                    <span className="text-muted-foreground block">Ngày kết thúc:</span>
+                                                    <span className="font-medium block">
+                                                        {formatDate(product.end_time)}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Time Remaining */}
+                                            <div className="flex items-start gap-2 text-sm">
+                                                <Clock className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                                                <div className="flex-1 min-w-0">
+                                                    <span className="text-muted-foreground block">Thời gian còn lại:</span>
+                                                    <span className={`font-medium block ${
+                                                        isEnded ? "text-red-600" : "text-green-600"
+                                                    }`}>
+                                                        {getTimeRemaining(product.end_time)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Action Button */}
+                                        <Button 
+                                            onClick={() => handleViewProduct(item.product_id || product.product_id)}
+                                            className="w-full mt-auto"
+                                            variant="outline"
+                                        >
+                                            Xem chi tiết
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            )
+                        })}
                     </div>
+
                     {/* Pagination */}
                     {pagination.totalPages > 1 && (
                         <div className="mt-8 flex justify-center">

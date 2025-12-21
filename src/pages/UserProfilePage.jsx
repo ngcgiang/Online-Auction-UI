@@ -9,7 +9,8 @@ import { getUserProfile } from "@/services/userService"
 import { UserProfile } from "@/components/UserProfile"
 import { Header } from "@/components/Header"
 import { UpdateUserPage } from "./UpdateUserPage"
-import { UserDetailPage } from "./UserDetailPage"
+import { UserWatchListPage } from "./UserWatchListPage"
+import { UserBiddedProductsPage } from "./UserBiddedPage"
 
 export function UserProfilePage() {
   const navigate = useNavigate()
@@ -142,9 +143,15 @@ export function UserProfilePage() {
               )}
               {activeTab === "watchlist" && (
                 <div className="bg-white rounded-xl shadow-sm border p-6">
-                  <UserDetailPage detailType="watchlist" />
+                  <UserWatchListPage detailType="watchlist" />
                 </div>
               )}
+              {activeTab === "bidded-products" && (
+                <div className="bg-white rounded-xl shadow-sm border p-6">
+                  <UserBiddedProductsPage />
+                </div>
+              )}
+
               {error && (
                 <Card className="mt-6 border-red-200 bg-red-50">
                   <CardContent className="p-6">
