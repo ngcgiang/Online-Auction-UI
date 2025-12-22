@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Heart, Star, Clock, User, Gavel, ArrowLeft, Send, AlertCircle, CheckCircle2, Pencil } from "lucide-react";
+import { Heart, Star, Clock, User, Gavel, ArrowLeft, Send, AlertCircle, CheckCircle2, Ban } from "lucide-react";
 import { formatPrice, getProductDetails, getProductQnA, getRelatedProducts } from "@/services/productService";
 import { getBidsByProductId, placeBid } from "@/services/bidService";
 import { addToWatchList, removeFromWatchList, getWatchListByUserId } from "@/services/watchListService";
-import { getBiddersByProductId } from "@/services/sellerService";
+import { getBiddersByProductId, getRefusedBiddersByProductId } from "@/services/sellerService";
 import { QnAThread } from "@/components/QnAThread";
 import AddProductDescription from "@/components/AddProductDescription";
 import ProductDescriptionList from "@/components/ProductDescriptionList";
@@ -53,6 +53,7 @@ export function ProductDetail() {
   const [isConfirmingBid, setIsConfirmingBid] = useState(false);
   const [pendingBidAmount, setPendingBidAmount] = useState(null);
   const [showAddDescription, setShowAddDescription] = useState(false);
+  const [refusedBidders, setRefusedBidders] = useState([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -334,6 +335,26 @@ export function ProductDetail() {
 
     fetchBidders();
   }, [productId, user?.user_id, product?.seller?.user_id]);
+
+  // Fetch refused bidders for mark in bids history
+  useEffect(() => {
+    const fetchRefusedBidders = async () => {
+      if (!productId) return;
+      try {
+        const response = await getRefusedBiddersByProductId(productId);;
+        if (response?.success && Array.isArray(response.data)) {
+          setRefusedBidders(response.data);
+        } else if (Array.isArray(response)) {
+          setRefusedBidders(response);
+        }
+      } catch (err) {
+        console.error("Error fetching refused bidders:", err);
+        setRefusedBidders([]);
+      }
+    };
+
+    fetchRefusedBidders();
+  }, [productId]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -654,8 +675,7 @@ export function ProductDetail() {
             )}
             {user?.user_id === product.seller.user_id && (  
               <>
-                {/* Bidder list section for seller*/
-                console.log("Rendering BidderList with bidders:", bidders)}
+                {/* Bidder list section for seller*/}
                 <BidderList
                   productId={productId}
                   bidders={bidders}
@@ -742,11 +762,23 @@ export function ProductDetail() {
                             {getTimeAgo(bid.bid_time)}
                           </span>
                         </div>
+                        {/* Sử dụng flex để đưa Tiền và Icon về cùng một hàng */}
+                        <div className="flex items-center justify-between w-full mt-1"> 
+                            
+                            {/* Phần hiển thị tiền */}
                             <p className="text-sm font-semibold text-primary">
                                 {isNaN(parseFloat(bid.amount)) 
                                     ? bid.amount 
                                     : formatPrice(parseFloat(bid.amount))}
                             </p>
+
+                            {/* Phần hiển thị icon Ban (thay cho Badge) */}
+                            {refusedBidders.some(rb => rb.bidder_id === bid.bidder.user_id) && (
+                                <div title="Bị người bán từ chối"> {/* Thẻ div bọc để hiển thị tooltip khi hover */}
+                                    <Ban size={16} className="text-red-500" /> 
+                                </div>
+                            )}
+                        </div>
                       </div>
                     ))
                   ) : (

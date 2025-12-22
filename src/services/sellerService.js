@@ -13,3 +13,8 @@ export const getBiddersByProductId = async (productId) => {
 export const refuseBidder = async (productId, bidderId) => {
   return apiClient.post(`/api/products/${productId}/refuse-bidder`, { bidder_id: bidderId });
 }
+
+// Get refused bidders for a specific product
+export const getRefusedBiddersByProductId = async (productId) => {
+  return apiClient.get(`/api/seller/products/${productId}/refused-bidders`);
+}

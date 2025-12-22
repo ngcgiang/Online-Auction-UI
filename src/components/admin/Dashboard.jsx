@@ -58,7 +58,7 @@ const Dashboard = () => {
         setTotalIncome(incomeValue);
 
         // getNewUsers - extract total_new_users from object structure
-        const usersValue = usersRes?.data?.total_new_users || 0;
+        const usersValue = usersRes?.data?.list.total_new_users || 0;
         setNewUsers(usersValue);
 
         // getTotalOrders - extract numeric value
@@ -66,6 +66,7 @@ const Dashboard = () => {
           ? ordersRes.data
           : ordersRes?.data?.total_orders || 0;
         setTotalOrders(ordersValue);
+        console.log('Total Orders:', ordersRes);
         
         const upgradeData = Array.isArray(upgradeRes?.data?.list) 
           ? upgradeRes.data.list 
