@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown, Pencil } from 'lucide-react';
 import { getProductsBySellerId, getExpiredProductsBySellerId } from '@/services/sellerService';
+import { getReviewedUsers, rateUser } from '@/services/userService';
+import RatingModal from '../RatingModal';
 
 const SellerProductList = () => {
   const navigate = useNavigate();
@@ -10,6 +12,9 @@ const SellerProductList = () => {
   const [expiredProducts, setExpiredProducts] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [reviewedUsersList, setReviewedUsersList] = React.useState([]);
+  const [isRatingModalOpen, setIsRatingModalOpen] = React.useState(false);
+  const [selectedRatingProduct, setSelectedRatingProduct] = React.useState(null);
   const itemsPerPage = 8;
 
   const handleProductClick = (productId) => {
@@ -27,17 +32,20 @@ const SellerProductList = () => {
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      const [activeRes, expiredRes] = await Promise.all([
+      const [activeRes, expiredRes, reviewedRes] = await Promise.all([
         getProductsBySellerId(),
-        getExpiredProductsBySellerId()
+        getExpiredProductsBySellerId(),
+        getReviewedUsers()
       ]);
       setActiveProducts(activeRes.data || []);
       setExpiredProducts(expiredRes.data || []);
+      setReviewedUsersList(reviewedRes.data?.list || []);
       setCurrentPage(1);
     } catch (error) {
       console.error('Lỗi khi tải sản phẩm:', error);
       setActiveProducts([]);
       setExpiredProducts([]);
+      setReviewedUsersList([]);
     } finally {
       setIsLoading(false);
     }
@@ -49,6 +57,34 @@ const SellerProductList = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentProducts = displayProducts.slice(startIndex, endIndex);
+
+  // Helper function: Kiểm tra xem sản phẩm đã được đánh giá chưa
+  const getReviewStatus = (productId) => {
+    return reviewedUsersList.find(review => review.product_id === productId);
+  };
+
+  // Handle mở rating modal
+  const handleOpenRatingModal = (product) => {
+    setSelectedRatingProduct(product);
+    setIsRatingModalOpen(true);
+  };
+
+  // Handle submit rating
+  const handleRatingSubmit = async (data) => {
+    try {
+      await rateUser(data);
+      // Reload reviewed users list
+      const reviewedRes = await getReviewedUsers();
+      setReviewedUsersList(reviewedRes.data?.list || []);
+    } catch (error) {
+      console.error('Lỗi khi gửi đánh giá:', error);
+    }
+  };
+
+  // Handle edit rating
+  const handleEditRating = (productId) => {
+    console.log("Click edit rating for product:", productId);
+  };
 
   return (
     <div className="space-y-6">
@@ -151,6 +187,7 @@ const SellerProductList = () => {
             </tbody>
           </table>
         </div>
+    
       ) : (
         <div className="bg-white rounded-lg border overflow-hidden">
           <table className="w-full">
@@ -160,6 +197,7 @@ const SellerProductList = () => {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Giá bán</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Người thắng</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Điểm đánh giá</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Đánh giá</th>
               </tr>
             </thead>
             <tbody>
@@ -189,6 +227,40 @@ const SellerProductList = () => {
                         <span className="text-foreground font-medium">{product.winner?.rating_score || 0}</span>
                       ) : (
                         <span className="text-slate-500">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {hasWinner ? (
+                        (() => {
+                          const reviewStatus = getReviewStatus(product.product_id);
+                          return reviewStatus ? (
+                            // Đã đánh giá
+                            <div className="flex items-center gap-2">
+                              {reviewStatus.rating_point === 1 ? (
+                                <ThumbsUp className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <ThumbsDown className="h-4 w-4 text-red-600" />
+                              )}
+                              <button
+                                onClick={() => handleEditRating(product.product_id)}
+                                className="inline-flex items-center gap-1 px-2 py-1 text-xs text-slate-600 hover:text-slate-900 border border-slate-200 rounded hover:bg-slate-50 transition-colors"
+                              >
+                                <Pencil className="h-3 w-3" />
+                                Sửa
+                              </button>
+                            </div>
+                          ) : (
+                            // Chưa đánh giá
+                            <button
+                              onClick={() => handleOpenRatingModal(product)}
+                              className="px-3 py-1 text-xs font-medium text-primary border border-primary rounded hover:bg-primary hover:text-white transition-colors"
+                            >
+                              Đánh giá người mua
+                            </button>
+                          );
+                        })()
+                      ) : (
+                        <span className="text-slate-500 text-sm">-</span>
                       )}
                     </td>
                   </tr>
@@ -222,7 +294,25 @@ const SellerProductList = () => {
                 </button>
               </div>
             </div>
+
           )}
+
+    {/* Rating Modal */}
+    {selectedRatingProduct && (
+      <RatingModal
+        isOpen={isRatingModalOpen}
+        onClose={() => {
+          setIsRatingModalOpen(false);
+          setSelectedRatingProduct(null);
+        }}
+        targetUser={{
+          id: selectedRatingProduct.winner?.user_id,
+          name: selectedRatingProduct.winner?.full_name
+        }}
+        productId={selectedRatingProduct.product_id}
+        onSubmit={handleRatingSubmit}
+      />
+    )}
     </div>
   );
 };

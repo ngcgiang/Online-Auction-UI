@@ -36,3 +36,15 @@ export const getBiddedProducts = async () => {
 export const getWonProducts = async () => {
   return apiClient.get(`/api/users/won-products`);
 }
+
+export const rateUser = async (data) => {
+  return apiClient.post(`/api/users/rating`, data);
+}
+
+export const putRateUser = async (rating_id, data) => {
+  return apiClient.put(`/api/users/rating${rating_id}`, data);
+}
+
+export const getReviewedUsers = async () => {
+  return apiClient.get(`/api/users/ratings/reviewed`);
+}
