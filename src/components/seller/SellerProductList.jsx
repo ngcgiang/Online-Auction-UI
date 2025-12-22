@@ -1,9 +1,54 @@
-import React from 'react';
-import { Loader2 } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getProductsBySellerId, getExpiredProductsBySellerId } from '@/services/sellerService';
 
 const SellerProductList = () => {
-  const [products] = React.useState([]);
-  const [isLoading] = React.useState(false);
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = React.useState('active');
+  const [activeProducts, setActiveProducts] = React.useState([]);
+  const [expiredProducts, setExpiredProducts] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 8;
+
+  const handleProductClick = (productId) => {
+    navigate(`/product/${productId}`);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
+  const fetchProducts = async () => {
+    try {
+      setIsLoading(true);
+      const [activeRes, expiredRes] = await Promise.all([
+        getProductsBySellerId(),
+        getExpiredProductsBySellerId()
+      ]);
+      setActiveProducts(activeRes.data || []);
+      setExpiredProducts(expiredRes.data || []);
+      setCurrentPage(1);
+    } catch (error) {
+      console.error('Lỗi khi tải sản phẩm:', error);
+      setActiveProducts([]);
+      setExpiredProducts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Tính toán phân trang
+  const displayProducts = activeTab === 'active' ? activeProducts : expiredProducts;
+  const totalPages = Math.ceil(displayProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentProducts = displayProducts.slice(startIndex, endIndex);
 
   return (
     <div className="space-y-6">
@@ -12,14 +57,99 @@ const SellerProductList = () => {
         <p className="text-muted-foreground mt-2">Quản lý các sản phẩm đã đăng của bạn</p>
       </div>
 
+      {/* Tabs */}
+      <div className="border-b border-slate-200">
+        <div className="flex gap-8">
+          <button
+            onClick={() => setActiveTab('active')}
+            className={`px-1 py-4 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'active'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-slate-600 hover:text-foreground'
+            }`}
+          >
+            Đang hoạt động ({activeProducts.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('expired')}
+            className={`px-1 py-4 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'expired'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-slate-600 hover:text-foreground'
+            }`}
+          >
+            Đã kết thúc ({expiredProducts.length})
+          </button>
+        </div>
+      </div>
+
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : products.length === 0 ? (
+      ) : displayProducts.length === 0 ? (
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-12 text-center">
-          <p className="text-slate-600 font-medium mb-2">Chưa có sản phẩm nào</p>
-          <p className="text-slate-500 text-sm">Hãy bắt đầu bằng cách đăng sản phẩm đầu tiên của bạn</p>
+          <p className="text-slate-600 font-medium mb-2">
+            {activeTab === 'active' ? 'Chưa có sản phẩm đang hoạt động' : 'Chưa có sản phẩm đã kết thúc'}
+          </p>
+          <p className="text-slate-500 text-sm">
+            {activeTab === 'active' 
+              ? 'Hãy bắt đầu bằng cách đăng sản phẩm đầu tiên của bạn' 
+              : 'Các sản phẩm của bạn sẽ xuất hiện ở đây khi kết thúc'}
+          </p>
+        </div>
+      ) : activeTab === 'active' ? (
+        <div className="bg-white rounded-lg border overflow-hidden">
+          <table className="w-full">
+            <thead className="border-b bg-slate-50">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Hình ảnh</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Tên sản phẩm</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Giá hiện tại</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Người thắng</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Thời gian còn lại</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentProducts.map((product) => (
+                <tr key={product.id} className="border-b hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleProductClick(product.product_id)}>
+                  <td className="px-6 py-4">
+                    {product.mainImage ? (
+                      <img 
+                        src={product.mainImage} 
+                        alt={product.product_name}
+                        className="h-12 w-12 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded bg-slate-200 flex items-center justify-center">
+                        <span className="text-xs text-slate-500">Không ảnh</span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-foreground font-medium">
+                    {product.product_name}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-foreground font-semibold">
+                    {new Intl.NumberFormat('vi-VN', { 
+                      style: 'currency', 
+                      currency: 'VND',
+                      minimumFractionDigits: 0
+                    }).format(product.current_price || 0)}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-foreground">
+                    {product.winner?.full_name || '-'}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-foreground">
+                    {product.remainingHours !== undefined ? (
+                      <span>{product.remainingHours} giờ</span>
+                    ) : (
+                      <span className="text-slate-500">Chưa có</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : (
         <div className="bg-white rounded-lg border overflow-hidden">
@@ -27,17 +157,72 @@ const SellerProductList = () => {
             <thead className="border-b bg-slate-50">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Tên sản phẩm</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Danh mục</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Giá khởi điểm</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Trạng thái</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Giá bán</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Người thắng</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Điểm đánh giá</th>
               </tr>
             </thead>
             <tbody>
-              {/* Empty table body */}
+              {currentProducts.map((product) => {
+                const hasWinner = product.winnerStatus === 'Has Winner';
+                return (
+                  <tr key={product.id} className="border-b hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 text-sm text-foreground font-medium">
+                      {product.product_name}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-foreground font-semibold">
+                      {new Intl.NumberFormat('vi-VN', { 
+                        style: 'currency', 
+                        currency: 'VND',
+                        minimumFractionDigits: 0
+                      }).format(product.current_price || 0)}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      {hasWinner ? (
+                        <span className="text-foreground">{product.winner?.full_name}</span>
+                      ) : (
+                        <span className="text-slate-500">Không ai đấu giá</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      {hasWinner ? (
+                        <span className="text-foreground font-medium">{product.winner?.rating_score || 0}</span>
+                      ) : (
+                        <span className="text-slate-500">-</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t bg-white">
+              <div className="text-sm text-slate-600">
+                Trang {currentPage} / {totalPages}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="inline-flex items-center justify-center h-10 px-4 rounded border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Trước
+                </button>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="inline-flex items-center justify-center h-10 px-4 rounded border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Sau
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </button>
+              </div>
+            </div>
+          )}
     </div>
   );
 };

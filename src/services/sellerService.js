@@ -18,3 +18,13 @@ export const refuseBidder = async (productId, bidderId) => {
 export const getRefusedBiddersByProductId = async (productId) => {
   return apiClient.get(`/api/seller/products/${productId}/refused-bidders`);
 }
+
+// Get products active for a specific seller
+export const getProductsBySellerId = async () => {
+  return apiClient.get(`/api/seller/products`);
+}
+
+// Get expired products for a specific seller
+export const getExpiredProductsBySellerId = async () => {
+  return apiClient.get(`/api/seller/products/ended`);
+}
