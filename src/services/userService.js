@@ -42,7 +42,7 @@ export const rateUser = async (data) => {
 }
 
 export const putRateUser = async (rating_id, data) => {
-  return apiClient.put(`/api/users/rating${rating_id}`, data);
+  return apiClient.put(`/api/users/rating/${rating_id}`, data);
 }
 
 export const getReviewedUsers = async () => {

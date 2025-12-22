@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { ThumbsUp, ThumbsDown, X } from 'lucide-react';
 
-const RatingModal = ({ isOpen, onClose, targetUser, productId, onSubmit }) => {
+const RatingModal = ({ isOpen, onClose, targetUser, productId, onSubmit, initialData }) => {
   const {
     register,
     handleSubmit,
@@ -18,6 +18,16 @@ const RatingModal = ({ isOpen, onClose, targetUser, productId, onSubmit }) => {
   });
 
   const selectedRating = watch('rating');
+
+  // Fill dữ liệu vào form nếu là chế độ edit
+  useEffect(() => {
+    if (initialData) {
+      setValue('rating', initialData.rating_point === 1 ? 'like' : 'dislike');
+      setValue('content', initialData.content);
+    } else {
+      reset();
+    }
+  }, [initialData, setValue, reset]);
 
   const handleClose = () => {
     reset();
@@ -43,7 +53,9 @@ const RatingModal = ({ isOpen, onClose, targetUser, productId, onSubmit }) => {
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-xl font-semibold text-foreground">Đánh giá người bán</h2>
+          <h2 className="text-xl font-semibold text-foreground">
+            {initialData ? 'Chỉnh sửa đánh giá' : 'Đánh giá người bán'}
+          </h2>
           <button
             onClick={handleClose}
             className="text-slate-500 hover:text-foreground transition-colors"
@@ -163,7 +175,7 @@ const RatingModal = ({ isOpen, onClose, targetUser, productId, onSubmit }) => {
               type="submit"
               className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 font-medium transition-colors"
             >
-              Gửi đánh giá
+              {initialData ? 'Cập nhật đánh giá' : 'Gửi đánh giá'}
             </button>
           </div>
         </form>

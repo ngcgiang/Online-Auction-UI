@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown, Pencil } from 'lucide-react';
 import { getProductsBySellerId, getExpiredProductsBySellerId } from '@/services/sellerService';
-import { getReviewedUsers, rateUser } from '@/services/userService';
+import { getReviewedUsers, rateUser, putRateUser } from '@/services/userService';
 import RatingModal from '../RatingModal';
 
 const SellerProductList = () => {
@@ -15,6 +15,7 @@ const SellerProductList = () => {
   const [reviewedUsersList, setReviewedUsersList] = React.useState([]);
   const [isRatingModalOpen, setIsRatingModalOpen] = React.useState(false);
   const [selectedRatingProduct, setSelectedRatingProduct] = React.useState(null);
+  const [selectedRating, setSelectedRating] = React.useState(null);
   const itemsPerPage = 8;
 
   const handleProductClick = (productId) => {
@@ -72,10 +73,20 @@ const SellerProductList = () => {
   // Handle submit rating
   const handleRatingSubmit = async (data) => {
     try {
-      await rateUser(data);
+      if (selectedRating) {
+        // Edit mode
+        await putRateUser(selectedRating.rating_id, {
+          ratingPoint: data.ratingPoint,
+          content: data.content,
+        });
+      } else {
+        // Create mode
+        await rateUser(data);
+      }
       // Reload reviewed users list
       const reviewedRes = await getReviewedUsers();
       setReviewedUsersList(reviewedRes.data?.list || []);
+      setSelectedRating(null);
     } catch (error) {
       console.error('Lỗi khi gửi đánh giá:', error);
     }
@@ -83,7 +94,14 @@ const SellerProductList = () => {
 
   // Handle edit rating
   const handleEditRating = (productId) => {
-    console.log("Click edit rating for product:", productId);
+    const product = expiredProducts.find(p => p.product_id === productId);
+    const rating = reviewedUsersList.find(r => r.product_id === productId);
+    
+    if (product && rating) {
+      setSelectedRatingProduct(product);
+      setSelectedRating(rating);
+      setIsRatingModalOpen(true);
+    }
   };
 
   return (
@@ -304,12 +322,14 @@ const SellerProductList = () => {
         onClose={() => {
           setIsRatingModalOpen(false);
           setSelectedRatingProduct(null);
+          setSelectedRating(null);
         }}
         targetUser={{
           id: selectedRatingProduct.winner?.user_id,
           name: selectedRatingProduct.winner?.full_name
         }}
         productId={selectedRatingProduct.product_id}
+        initialData={selectedRating}
         onSubmit={handleRatingSubmit}
       />
     )}
