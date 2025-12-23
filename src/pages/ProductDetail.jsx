@@ -27,6 +27,8 @@ import { formatTimeRemaining } from "@/lib/socket";
 import { Header } from "@/components/Header";
 import { BidInput } from "@/components/BidInput";
 import { useAuth } from "@/context/AuthContext";
+import { postComment } from "@/services/qaService";
+import { toast } from "react-toastify";
 
 export function ProductDetail() {
   const { productId } = useParams();
@@ -54,6 +56,7 @@ export function ProductDetail() {
   const [pendingBidAmount, setPendingBidAmount] = useState(null);
   const [showAddDescription, setShowAddDescription] = useState(false);
   const [refusedBidders, setRefusedBidders] = useState([]);
+  const [qnaRefreshTrigger, setQnaRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -238,31 +241,84 @@ export function ProductDetail() {
     return () => clearInterval(timer);
   }, [product?.end_time]);
 
-  useEffect(() => {
-    const fetchQnA = async () => {
-      if (!productId) return;
-      
-      setQnaLoading(true);
-      try {
-        const response = await getProductQnA(productId);
-        if (Array.isArray(response)) {
-          // Filter to get only top-level comments (parent_comment_id === null)
-          const topLevelComments = response.filter(comment => comment.parent_comment_id === null);
-          setQnaData(topLevelComments);
-        } else if (response?.data && Array.isArray(response.data)) {
-          const topLevelComments = response.data.filter(comment => comment.parent_comment_id === null);
-          setQnaData(topLevelComments);
-        }
-      } catch (err) {
-        console.error("Error fetching Q&A:", err);
-        setQnaData([]);
-      } finally {
-        setQnaLoading(false);
+  // Fetch QnA - Di chuyển ra ngoài useEffect
+  const fetchQnA = async () => {
+    if (!productId) return;
+    setQnaLoading(true);
+    try {
+      const response = await getProductQnA(productId);
+      if (Array.isArray(response)) {
+        const topLevelComments = response.filter(comment => comment.parent_comment_id === null);
+        setQnaData(topLevelComments);
+      } else if (response?.data && Array.isArray(response.data)) {
+        const topLevelComments = response.data.filter(comment => comment.parent_comment_id === null);
+        setQnaData(topLevelComments);
       }
-    };
+    } catch (err) {
+      setQnaData([]);
+    } finally {
+      setQnaLoading(false);
+    }
+  };
 
+  // useEffect để gọi fetchQnA
+  useEffect(() => {
     fetchQnA();
-  }, [productId]);
+  }, [productId, qnaRefreshTrigger]);
+
+  // Thêm hàm gửi câu hỏi
+  const handleAskQuestion = async () => {
+    if (!newQuestion.trim()) return;
+    if (!user?.user_id) {
+      toast.error("Vui lòng đăng nhập để gửi câu hỏi.");
+      navigate("/login", { state: { from: location } });
+      return;
+    }
+    try {
+      const payload = {
+        product_id: Number(productId),
+        user_id: user.user_id,
+        content: newQuestion.trim(),
+      };
+      await postComment(payload);
+      
+      // Trigger refresh để load lại QnA
+      setQnaRefreshTrigger(prev => prev + 1);
+      
+      setNewQuestion("");
+      toast.success("Gửi câu hỏi thành công!");
+    } catch (err) {
+      toast.error("Gửi câu hỏi thất bại!");
+    }
+  };
+
+  // Thêm hàm xử lý reply
+  const handleReplySubmit = async (parentCommentId, replyContent) => {
+    if (!user?.user_id) {
+      toast.error("Vui lòng đăng nhập để trả lời.");
+      navigate("/login", { state: { from: location } });
+      return;
+    }
+
+    try {
+      const payload = {
+        product_id: Number(productId),
+        user_id: user.user_id,
+        content: replyContent.trim(),
+        parent_comment_id: parentCommentId,
+      };
+
+      await postComment(payload);
+      
+      // Trigger refresh để load lại QnA với reply mới
+      setQnaRefreshTrigger(prev => prev + 1);
+      
+      toast.success("Trả lời thành công!");
+    } catch (err) {
+      console.error("Error posting reply:", err);
+      toast.error("Trả lời thất bại!");
+    }
+  };
 
   useEffect(() => {
     const fetchRelated = async () => {
@@ -400,13 +456,6 @@ export function ProductDetail() {
       window.bidPromiseResolve = resolve;
       window.bidPromiseReject = reject;
     });
-  };
-
-  const handleAskQuestion = () => {
-    if (!newQuestion.trim()) return;
-    console.log("Asking question:", newQuestion);
-    setNewQuestion("");
-    // API call would go here
   };
 
   const getStatusBadge = (status) => {
@@ -859,7 +908,11 @@ export function ProductDetail() {
               ) : qnaData.length > 0 ? (
                 <div className="space-y-4 max-h-[800px] overflow-y-auto">
                   {qnaData.map((comment) => (
-                    <QnAThread key={comment.comment_id} comment={comment} />
+                    <QnAThread 
+                      key={comment.comment_id} 
+                      comment={comment}
+                      onReplySubmit={handleReplySubmit}
+                    />
                   ))}
                 </div>
               ) : (
@@ -999,4 +1052,3 @@ export function ProductDetail() {
     </div>
   );
 }
-
