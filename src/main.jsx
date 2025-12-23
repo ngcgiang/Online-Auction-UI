@@ -1,5 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
 import { Toast } from "./components/ui/toast";
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
@@ -14,6 +16,12 @@ import  SellerManagementPage  from "./pages/SellerManagementPage.jsx";
 import  AdminManagementPage  from "./pages/AdminManagementPage.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { UpdateUserPage } from "./pages/UpdateUserPage.jsx";
+import CheckoutPage from "./pages/CheckoutPage.jsx";
+
+// Load Stripe - Replace with your actual publishable key
+const stripePromise = loadStripe(
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_example"
+);
 
 const router = createBrowserRouter([
   {
@@ -50,6 +58,10 @@ const router = createBrowserRouter([
   },{
     path: "/edit-profile",
     element: <UpdateUserPage />,
+  },
+  {
+    path: "/checkout/:productId",
+    element: <CheckoutPage />,
   }
 ]);
 
@@ -58,7 +70,9 @@ const root = document.getElementById("root");
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <AuthProvider>
-      <RouterProvider router={router} />
+      <Elements stripe={stripePromise}>
+        <RouterProvider router={router} />
+      </Elements>
       <Toast />
     </AuthProvider>
   </React.StrictMode>,
