@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2, ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown, Pencil } from 'lucide-react';
 import { getProductsBySellerId, getExpiredProductsBySellerId } from '@/services/sellerService';
 import { getReviewedUsers, rateUser, putRateUser } from '@/services/userService';
+import { getOrderStatusByProductId } from '@/services/orderService';
 import RatingModal from '../RatingModal';
 
 const SellerProductList = () => {
@@ -16,6 +17,7 @@ const SellerProductList = () => {
   const [isRatingModalOpen, setIsRatingModalOpen] = React.useState(false);
   const [selectedRatingProduct, setSelectedRatingProduct] = React.useState(null);
   const [selectedRating, setSelectedRating] = React.useState(null);
+  const [paymentStatus, setPaymentStatus] = React.useState({});
   const itemsPerPage = 8;
 
   const handleProductClick = (productId) => {
@@ -41,6 +43,23 @@ const SellerProductList = () => {
       setActiveProducts(activeRes.data || []);
       setExpiredProducts(expiredRes.data || []);
       setReviewedUsersList(reviewedRes.data?.list || []);
+      
+      // Fetch payment status for expired products
+      if (expiredRes.data && expiredRes.data.length > 0) {
+        const paymentStatusMap = {};
+        for (const product of expiredRes.data) {
+          try {
+            const orderRes = await getOrderStatusByProductId(product.product_id);
+            if (orderRes.success && orderRes.data) {
+              paymentStatusMap[product.product_id] = orderRes.data.order_status === 'paid';
+            }
+          } catch (err) {
+            console.error(`Lỗi tải trạng thái thanh toán cho sản phẩm ${product.product_id}:`, err);
+            paymentStatusMap[product.product_id] = false;
+          }
+        }
+        setPaymentStatus(paymentStatusMap);
+      }
       setCurrentPage(1);
     } catch (error) {
       console.error('Lỗi khi tải sản phẩm:', error);
@@ -216,6 +235,7 @@ const SellerProductList = () => {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Người thắng</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Điểm đánh giá</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Đánh giá</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Thanh toán</th>
               </tr>
             </thead>
             <tbody>
@@ -277,6 +297,19 @@ const SellerProductList = () => {
                             </button>
                           );
                         })()
+                      ) : (
+                        <span className="text-slate-500 text-sm">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {hasWinner ? (
+                        <div className={`px-3 py-1 rounded-full text-xs font-medium text-center inline-block ${
+                          paymentStatus[product.product_id]
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {paymentStatus[product.product_id] ? '✓ Đã thanh toán' : '⏳ Chưa thanh toán'}
+                        </div>
                       ) : (
                         <span className="text-slate-500 text-sm">-</span>
                       )}

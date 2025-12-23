@@ -1,4 +1,4 @@
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,6 @@ export function ProductDetail() {
   const [bidHistory, setBidHistory] = useState([]);
   const [bidLoading, setBidLoading] = useState(true);
   const [bidders, setBidders] = useState([]);
-  const [biddersLoading, setBiddersLoading] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState("--:--:--");
   const [isConfirmingBid, setIsConfirmingBid] = useState(false);
@@ -374,7 +373,6 @@ export function ProductDetail() {
     }
 
     const fetchBidders = async () => {
-      setBiddersLoading(true);
       try {
         const response = await getBiddersByProductId(productId);
 
@@ -384,10 +382,8 @@ export function ProductDetail() {
       } catch (err) {
         console.error("Error fetching bidders:", err);
         setBidders([]);
-      } finally {
-        setBiddersLoading(false);
       }
-    };
+  };
 
     fetchBidders();
   }, [productId, user?.user_id, product?.seller?.user_id]);
@@ -695,7 +691,7 @@ export function ProductDetail() {
               </div>
             )}
 
-            {user?.user_id !== product.seller.user_id && (
+            {user?.user_id !== product.seller.user_id && product.status === "active" && (
               <>
                 {/* Bidding Section */}
                 <Card>
@@ -748,6 +744,21 @@ export function ProductDetail() {
                   }}
                 />
               </>
+            )}
+            {user?.user_id === product.winner?.user_id && ( product.status === "sold" || product.status === "expired") && (
+              <div className="p-4 bg-gray-100 border border-gray-300 rounded-md">
+                <p className="text-gray-800 font-medium">
+                  Chúc mừng! Bạn đã thắng cuộc đấu giá cho sản phẩm này.
+                </p>
+                <button>
+                  {/* Link to payment or further instructions can go here */
+                  
+                  console.log("Proceed to payment")}
+                </button>
+              <Button onClick={() => navigate(`/checkout/${product.product_id}`)} className="mt-2 w-full">
+                Thanh toán
+              </Button>
+              </div>
             )}
 
             {/* Meta Info */}
