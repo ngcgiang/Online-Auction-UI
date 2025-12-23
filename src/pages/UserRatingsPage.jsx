@@ -199,7 +199,7 @@ export function UserRatingsPage() {
 
     const handleViewProduct = (productId) => {
         if (productId) {
-            navigate(`/products/${productId}`)
+            navigate(`/product/${productId}`)
         }
     }
 
