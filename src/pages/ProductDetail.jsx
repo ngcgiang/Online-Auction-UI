@@ -384,8 +384,22 @@ export function ProductDetail() {
   };
 
   const handleBuyNow = () => {
-    console.log("Buy now clicked");
-    // API call would go here
+      if (!user?.user_id) {
+      // Redirect to login with current location in state
+      navigate("/login", { state: { from: location } });
+      return Promise.reject(new Error("Vui lòng đăng nhập để đặt giá"));
+    }
+
+    // Show confirmation dialog
+    setPendingBidAmount(product.buy_now_value);
+    setIsConfirmingBid(true);
+    
+    // Return a promise that will be resolved when user confirms
+    return new Promise((resolve, reject) => {
+      // Store resolve and reject for later use
+      window.bidPromiseResolve = resolve;
+      window.bidPromiseReject = reject;
+    });
   };
 
   const handleAskQuestion = () => {
@@ -909,9 +923,15 @@ export function ProductDetail() {
       <Dialog open={isConfirmingBid} onOpenChange={setIsConfirmingBid}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Xác nhận đặt giá</DialogTitle>
+            <DialogTitle>
+              {pendingBidAmount >= parseFloat(product?.buy_now_value || 0) && product?.buy_now_value
+                ? "Xác nhận mua ngay"
+                : "Xác nhận đặt giá"}
+            </DialogTitle>
             <DialogDescription>
-              Vui lòng xác nhận thông tin đặt giá của bạn
+              {pendingBidAmount >= parseFloat(product?.buy_now_value || 0) && product?.buy_now_value
+                ? "Bạn muốn mua ngay sản phẩm. Hãy xác nhận để hoàn tất giao dịch."
+                : "Vui lòng xác nhận thông tin đặt giá của bạn"}
             </DialogDescription>
           </DialogHeader>
 
@@ -922,27 +942,38 @@ export function ProductDetail() {
               <p className="font-semibold text-foreground">{product?.product_name}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Giá hiện tại</p>
-                <p className="font-semibold text-foreground">
-                  {formatPrice(product?.current_price)}
-                </p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Giá đặt của bạn</p>
+            {pendingBidAmount >= parseFloat(product?.buy_now_value || 0) && product?.buy_now_value ? (
+              <div className="space-y-2 pt-2 border-t">
+                <p className="text-sm text-muted-foreground">Giá mua ngay</p>
                 <p className="font-semibold text-primary text-lg">
-                  {formatPrice(pendingBidAmount)}
+                  {formatPrice(parseFloat(product?.buy_now_value))}
                 </p>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Giá hiện tại</p>
+                  <p className="font-semibold text-foreground">
+                    {formatPrice(product?.current_price)}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Giá đặt của bạn</p>
+                  <p className="font-semibold text-primary text-lg">
+                    {formatPrice(pendingBidAmount)}
+                  </p>
+                </div>
+              </div>
+            )}
 
-            <div className="space-y-2 pt-2 border-t">
-              <p className="text-sm text-muted-foreground">Tăng giá</p>
-              <p className="font-semibold text-foreground">
-                {formatPrice(pendingBidAmount - (product?.current_price || 0))}
-              </p>
-            </div>
+            {!(pendingBidAmount >= parseFloat(product?.buy_now_value || 0) && product?.buy_now_value) && (
+              <div className="space-y-2 pt-2 border-t">
+                <p className="text-sm text-muted-foreground">Tăng giá</p>
+                <p className="font-semibold text-foreground">
+                  {formatPrice(pendingBidAmount - (product?.current_price || 0))}
+                </p>
+              </div>
+            )}
           </div>
 
           <DialogFooter className="flex gap-2 justify-end">
@@ -958,7 +989,9 @@ export function ProductDetail() {
               onClick={handleConfirmBid}
               className="bg-black hover:bg-gray-800"
             >
-              Xác nhận đặt giá
+              {pendingBidAmount >= parseFloat(product?.buy_now_value || 0) && product?.buy_now_value
+                ? "Xác nhận mua ngay"
+                : "Xác nhận đặt giá"}
             </Button>
           </DialogFooter>
         </DialogContent>
