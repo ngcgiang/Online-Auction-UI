@@ -165,7 +165,9 @@ export function UserBiddedProductsPage() {
     }
 
     const handleViewProduct = (productId) => {
-        navigate(`/products/${productId}`)
+        if (productId) {
+            navigate(`/product/${productId}`)
+        }
     }
 
     const formatPrice = (price) => {
