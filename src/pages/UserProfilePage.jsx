@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ChevronRight, User, Edit, KeyRound, Menu, X, ShoppingCart, Heart,MessageCircleMore } from "lucide-react"
+import { ArrowLeft,Medal, ChevronRight, User, Edit, KeyRound, Menu, X, ShoppingCart, Heart,MessageCircleMore } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import { getUserProfile } from "@/services/userService"
 import { UserProfile } from "@/components/UserProfile"
@@ -12,7 +12,7 @@ import { UpdateUserPage } from "./UpdateUserPage"
 import { UserWatchListPage } from "./UserWatchListPage"
 import { UserBiddedProductsPage } from "./UserBiddedPage"
 import { UserRatingsPage } from "./UserRatingsPage"
-
+import { UserWonProductsPage } from "./UserWonProducts"
 export function UserProfilePage() {
   const navigate = useNavigate()
   const { user: authUser } = useAuth()
@@ -67,6 +67,11 @@ export function UserProfilePage() {
       key: "bidded-products",
       label: "Danh sách sản phẩm đã tham gia đấu giá",
       icon: ShoppingCart,
+    },
+    {
+      key: "won-products",
+      label: "Danh sách sản phẩm đã thắng đấu giá",
+      icon: Medal,
     },
     {
       key: "ratings",
@@ -155,6 +160,11 @@ export function UserProfilePage() {
               {activeTab === "ratings" && (
                 <div className="bg-white rounded-xl shadow-sm border p-6">
                   <UserRatingsPage />
+                </div>
+              )}
+              {activeTab === "won-products" && (
+                <div className="bg-white rounded-xl shadow-sm border p-6">
+                  <UserWonProductsPage />
                 </div>
               )}
 
