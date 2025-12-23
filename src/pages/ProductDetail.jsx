@@ -29,6 +29,15 @@ import { BidInput } from "@/components/BidInput";
 import { useAuth } from "@/context/AuthContext";
 import { postComment } from "@/services/qaService";
 import { toast } from "react-toastify";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 export function ProductDetail() {
   const { productId } = useParams();
@@ -56,6 +65,9 @@ export function ProductDetail() {
   const [showAddDescription, setShowAddDescription] = useState(false);
   const [refusedBidders, setRefusedBidders] = useState([]);
   const [qnaRefreshTrigger, setQnaRefreshTrigger] = useState(0);
+  const [qnaPage, setQnaPage] = useState(1);
+  const [qnaPageSize] = useState(5);
+  const [qnaTotal, setQnaTotal] = useState(0);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -240,30 +252,35 @@ export function ProductDetail() {
     return () => clearInterval(timer);
   }, [product?.end_time]);
 
-  // Fetch QnA - Di chuyển ra ngoài useEffect
+  // Fetch QnA with pagination
   const fetchQnA = async () => {
     if (!productId) return;
     setQnaLoading(true);
     try {
       const response = await getProductQnA(productId);
+      let allComments = [];
       if (Array.isArray(response)) {
-        const topLevelComments = response.filter(comment => comment.parent_comment_id === null);
-        setQnaData(topLevelComments);
+        allComments = response.filter(comment => comment.parent_comment_id === null);
       } else if (response?.data && Array.isArray(response.data)) {
-        const topLevelComments = response.data.filter(comment => comment.parent_comment_id === null);
-        setQnaData(topLevelComments);
+        allComments = response.data.filter(comment => comment.parent_comment_id === null);
       }
+      setQnaTotal(allComments.length);
+      // Pagination logic
+      const start = (qnaPage - 1) * qnaPageSize;
+      const end = start + qnaPageSize;
+      setQnaData(allComments.slice(start, end));
     } catch (err) {
       setQnaData([]);
+      setQnaTotal(0);
     } finally {
       setQnaLoading(false);
     }
   };
 
-  // useEffect để gọi fetchQnA
   useEffect(() => {
     fetchQnA();
-  }, [productId, qnaRefreshTrigger]);
+    // eslint-disable-next-line
+  }, [productId, qnaRefreshTrigger, qnaPage]);
 
   // Thêm hàm gửi câu hỏi
   const handleAskQuestion = async () => {
@@ -536,6 +553,98 @@ export function ProductDetail() {
       </div>
     );
   }
+
+  // Pagination rendering for QnA
+  const renderQnAPagination = () => {
+    const totalPages = Math.ceil(qnaTotal / qnaPageSize);
+    if (totalPages <= 1) return null;
+    const items = [];
+    const maxVisible = 5;
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={qnaPage === i}
+              onClick={() => setQnaPage(i)}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            isActive={qnaPage === 1}
+            onClick={() => setQnaPage(1)}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+      if (qnaPage > 3) {
+        items.push(
+          <PaginationItem key="ellipsis-start">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+      const start = Math.max(2, qnaPage - 1);
+      const end = Math.min(totalPages - 1, qnaPage + 1);
+      for (let i = start; i <= end; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={qnaPage === i}
+              onClick={() => setQnaPage(i)}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+      if (qnaPage < totalPages - 2) {
+        items.push(
+          <PaginationItem key="ellipsis-end">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+      items.push(
+        <PaginationItem key={totalPages}>
+          <PaginationLink
+            isActive={qnaPage === totalPages}
+            onClick={() => setQnaPage(totalPages)}
+          >
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    return (
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => setQnaPage(qnaPage - 1)}
+                className={qnaPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            {items}
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setQnaPage(qnaPage + 1)}
+                className={qnaPage === Math.ceil(qnaTotal / qnaPageSize) ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -907,7 +1016,7 @@ export function ProductDetail() {
             {/* Questions & Answers List */}
             <div className="border-t pt-6">
               <p className="text-sm font-medium mb-4">
-                Các câu hỏi từ cộng đồng ({qnaData.length})
+                Các câu hỏi từ cộng đồng ({qnaTotal})
               </p>
 
               {qnaLoading ? (
@@ -917,15 +1026,18 @@ export function ProductDetail() {
                   ))}
                 </div>
               ) : qnaData.length > 0 ? (
-                <div className="space-y-4 max-h-[800px] overflow-y-auto">
-                  {qnaData.map((comment) => (
-                    <QnAThread 
-                      key={comment.comment_id} 
-                      comment={comment}
-                      onReplySubmit={handleReplySubmit}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="space-y-4 max-h-[800px] overflow-y-auto">
+                    {qnaData.map((comment) => (
+                      <QnAThread 
+                        key={comment.comment_id} 
+                        comment={comment}
+                        onReplySubmit={handleReplySubmit}
+                      />
+                    ))}
+                  </div>
+                  {renderQnAPagination()}
+                </>
               ) : (
                 <p className="text-muted-foreground text-center py-8">
                   Chưa có câu hỏi nào. Hãy là người đầu tiên đặt câu hỏi!
