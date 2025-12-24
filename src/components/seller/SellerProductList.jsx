@@ -1,10 +1,21 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown, Pencil } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown, Pencil, AlertCircle } from 'lucide-react';
 import { getProductsBySellerId, getExpiredProductsBySellerId } from '@/services/sellerService';
 import { getReviewedUsers, rateUser, putRateUser } from '@/services/userService';
-import { getOrderStatusByProductId } from '@/services/orderService';
+import { getOrderStatusByProductId, cancelOrderByProductId, markShippedByProductId } from '@/services/orderService';
 import RatingModal from '../RatingModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { de } from 'zod/v4/locales';
 
 const SellerProductList = () => {
   const navigate = useNavigate();
@@ -18,6 +29,14 @@ const SellerProductList = () => {
   const [selectedRatingProduct, setSelectedRatingProduct] = React.useState(null);
   const [selectedRating, setSelectedRating] = React.useState(null);
   const [paymentStatus, setPaymentStatus] = React.useState({});
+  const [deliveryStatusMap, setDeliveryStatusMap] = React.useState({});
+  const [confirmDialog, setConfirmDialog] = React.useState({
+    isOpen: false,
+    action: null,
+    productId: null,
+    productName: null,
+  });
+  const [isActionLoading, setIsActionLoading] = React.useState(false);
   const itemsPerPage = 8;
 
   const handleProductClick = (productId) => {
@@ -52,6 +71,7 @@ const SellerProductList = () => {
             const orderRes = await getOrderStatusByProductId(product.product_id);
             if (orderRes.success && orderRes.data) {
               paymentStatusMap[product.product_id] = orderRes.data.order_status === 'paid';
+              deliveryStatusMap[product.product_id] = orderRes.data.delivery_status;
             }
           } catch (err) {
             console.error(`Lỗi tải trạng thái thanh toán cho sản phẩm ${product.product_id}:`, err);
@@ -59,6 +79,7 @@ const SellerProductList = () => {
           }
         }
         setPaymentStatus(paymentStatusMap);
+        setDeliveryStatusMap(deliveryStatusMap);
       }
       setCurrentPage(1);
     } catch (error) {
@@ -120,6 +141,67 @@ const SellerProductList = () => {
       setSelectedRatingProduct(product);
       setSelectedRating(rating);
       setIsRatingModalOpen(true);
+    }
+  };
+
+  // Open confirmation dialog
+  const openConfirmDialog = (action, productId, productName) => {
+    setConfirmDialog({
+      isOpen: true,
+      action,
+      productId,
+      productName,
+    });
+  };
+
+  // Close confirmation dialog
+  const closeConfirmDialog = () => {
+    setConfirmDialog({
+      isOpen: false,
+      action: null,
+      productId: null,
+      productName: null,
+    });
+  };
+
+  // Handle ship action
+  const handleShip = async () => {
+    try {
+      setIsActionLoading(true);
+      await markShippedByProductId(confirmDialog.productId);
+      // Reload products to update status
+      await fetchProducts();
+      closeConfirmDialog();
+    } catch (error) {
+      console.error('Lỗi khi đánh dấu gửi hàng:', error);
+      alert('Lỗi: ' + (error.response?.data?.message || 'Không thể gửi hàng'));
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // Handle cancel action
+  const handleCancel = async () => {
+    try {
+      setIsActionLoading(true);
+      await cancelOrderByProductId(confirmDialog.productId);
+      // Reload products to update status
+      await fetchProducts();
+      closeConfirmDialog();
+    } catch (error) {
+      console.error('Lỗi khi hủy giao dịch:', error);
+      alert('Lỗi: ' + (error.response?.data?.message || 'Không thể hủy giao dịch'));
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // Execute action based on type
+  const executeAction = async () => {
+    if (confirmDialog.action === 'ship') {
+      await handleShip();
+    } else if (confirmDialog.action === 'cancel') {
+      await handleCancel();
     }
   };
 
@@ -236,6 +318,7 @@ const SellerProductList = () => {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Điểm đánh giá</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Đánh giá</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Thanh toán</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -314,6 +397,59 @@ const SellerProductList = () => {
                         <span className="text-slate-500 text-sm">-</span>
                       )}
                     </td>
+                    <td>
+                      <div className="flex gap-2 px-6 py-4">
+                        {paymentStatus[product.product_id] ? (
+                          // LOGIC KHI ĐÃ THANH TOÁN
+                          deliveryStatusMap[product.product_id] === 'shipped' ? (
+                            // Trường hợp 1: Đã gửi hàng -> Hiện Badge
+                            <span className="px-3 py-1 rounded text-sm font-medium bg-blue-100 text-blue-700">
+                              Đã gửi hàng
+                            </span>
+                          ) : deliveryStatusMap[product.product_id] === 'pending' ? (
+                            // Trường hợp 2: Trạng thái 'delivered' -> Hiện nút Gửi hàng
+                            // (Lưu ý: Bạn hãy kiểm tra lại logic này, thường là trạng thái 'chờ' mới hiện nút Gửi)
+                            <button
+                              onClick={() => openConfirmDialog('ship', product.product_id, product.product_name)}
+                              disabled={isActionLoading}
+                              className="px-3 py-1 rounded text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              Gửi hàng
+                            </button>
+                          ) : deliveryStatusMap[product.product_id] === 'delivered' ? (
+                            <span className="px-3 py-1 rounded text-sm font-medium bg-blue-100 text-blue-700">
+                              Đã nhận hàng
+                            </span>
+                          ) : (
+                            // Trường hợp 3: Các trạng thái còn lại -> Hiện nút Hủy
+                            <button
+                              onClick={() => openConfirmDialog('cancel', product.product_id, product.product_name)}
+                              disabled={isActionLoading}
+                              className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              Hủy giao dịch
+                            </button>
+                          )
+                        ) : (
+                           deliveryStatusMap[product.product_id] === 'cancelled' ? (
+                            // Trường hợp 4: Đã hủy -> Hiện Badge
+                            <span className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700">
+                              Đã hủy
+                            </span> 
+                          ) : (
+                          // LOGIC KHI CHƯA THANH TOÁN
+                          // Trường hợp 3: Các trạng thái còn lại -> Hiện nút Hủy
+                            <button
+                              onClick={() => openConfirmDialog('cancel', product.product_id, product.product_name)}
+                              disabled={isActionLoading}
+                              className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              Hủy giao dịch
+                            </button>
+                          )
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -366,6 +502,46 @@ const SellerProductList = () => {
         onSubmit={handleRatingSubmit}
       />
     )}
+
+    {/* Confirmation Dialog */}
+    <AlertDialog open={confirmDialog.isOpen} onOpenChange={closeConfirmDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-yellow-600" />
+            Xác nhận hành động
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {confirmDialog.action === 'ship' ? (
+              <div className="space-y-2">
+                <p>Bạn có chắc chắn muốn gửi hàng cho sản phẩm <strong>{confirmDialog.productName}</strong>?</p>
+                <p className="text-sm text-slate-500">Hành động này không thể hoàn tác.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p>Bạn có chắc chắn muốn hủy giao dịch cho sản phẩm <strong>{confirmDialog.productName}</strong>?</p>
+                <p className="text-sm text-slate-500">Hành động này không thể hoàn tác.</p>
+              </div>
+            )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isActionLoading}>
+            Hủy bỏ
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={executeAction}
+            disabled={isActionLoading}
+            className={confirmDialog.action === 'ship' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+          >
+            {isActionLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin inline" />
+            ) : null}
+            {confirmDialog.action === 'ship' ? 'Gửi hàng' : 'Hủy giao dịch'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </div>
   );
 };
