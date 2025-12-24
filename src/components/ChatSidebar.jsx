@@ -78,8 +78,6 @@ const ChatSidebar = ({ selectedProductId, onSelectChat, isLoading: externalLoadi
     <div className="w-full md:w-96 bg-white border-r border-gray-200 flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Tin nhắn</h2>
-
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
