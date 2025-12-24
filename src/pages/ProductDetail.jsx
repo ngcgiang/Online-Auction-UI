@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import React from "react";
+import { useState, useEffect, use } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,10 @@ import { BidInput } from "@/components/BidInput";
 import { useAuth } from "@/context/AuthContext";
 import { postComment } from "@/services/qaService";
 import { toast } from "react-toastify";
+import { getOrderStatusByProductId } from "@/services/orderService";
+import { getReviewedUsers, rateUser, putRateUser } from '@/services/userService';
+import RatingModal from '@/components/RatingModal';
+
 import {
   Pagination,
   PaginationContent,
@@ -68,6 +73,11 @@ export function ProductDetail() {
   const [qnaPage, setQnaPage] = useState(1);
   const [qnaPageSize] = useState(5);
   const [qnaTotal, setQnaTotal] = useState(0);
+  const [orderStatus, setOrderStatus] = useState(null);
+  const [reviewedUsersList, setReviewedUsersList] = React.useState([]);
+  const [isRatingModalOpen, setIsRatingModalOpen] = React.useState(false);
+  const [selectedRatingProduct, setSelectedRatingProduct] = React.useState(null);
+  const [selectedRating, setSelectedRating] = React.useState(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -93,6 +103,65 @@ export function ProductDetail() {
 
     fetchProduct();
   }, [productId]);
+
+  useEffect(() => {
+    const fetchOrderStatus = async () => {
+      if (!productId) return;
+      try {
+        const response = await getOrderStatusByProductId(productId);
+
+        if (response && response.success) {
+          setOrderStatus(response.data);
+        }
+      } catch (err) {
+        console.error("Error fetching order status:", err);
+      }
+    };
+    fetchOrderStatus();
+  }, [productId]);
+
+  const getReviewStatus = (productId) => {
+    return reviewedUsersList.find(review => review.product_id === productId);
+  };
+
+    // Handle mở rating modal
+  const handleOpenRatingModal = (product) => {
+    setSelectedRatingProduct(product);
+    setIsRatingModalOpen(true);
+  };
+
+  // Handle edit rating
+  const handleEditRating = (productId) => {
+    const rating = reviewedUsersList.find(r => r.product_id === productId);
+    
+    if (product && rating) {
+      setSelectedRatingProduct(product);
+      setSelectedRating(rating);
+      setIsRatingModalOpen(true);
+    }
+  };
+
+    // Handle submit rating
+    const handleRatingSubmit = async (data) => {
+      try {
+        if (selectedRating) {
+          // Edit mode
+          await putRateUser(selectedRating.rating_id, {
+            ratingPoint: data.ratingPoint,
+            content: data.content,
+          });
+        } else {
+          // Create mode
+          await rateUser(data);
+        }
+        // Reload reviewed users list
+        const reviewedRes = await getReviewedUsers();
+        setReviewedUsersList(reviewedRes.data?.list || []);
+        setSelectedRating(null);
+      } catch (error) {
+        console.error('Lỗi khi gửi đánh giá:', error);
+      }
+    };
 
   // Fetch watch list status on component mount
   useEffect(() => {
@@ -850,27 +919,81 @@ export function ProductDetail() {
                   onBidderRemoved={(bidderId) => {
                     // Update local state when a bidder is removed
                     setBidders(bidders.filter(b => b.bidder_id !== bidderId));
-                  }}
-                />
-              </>
-            )}
-            {user?.user_id === product.winner?.user_id && ( product.status === "sold" || product.status === "expired") && (
-              <div className="p-4 bg-gray-100 border border-gray-300 rounded-md">
-                <p className="text-gray-800 font-medium">
-                  Chúc mừng! Bạn đã thắng cuộc đấu giá cho sản phẩm này.
-                </p>
-                <button>
-                  {/* Link to payment or further instructions can go here */
-                  
-                  console.log("Proceed to payment")}
-                </button>
-              <Button onClick={() => navigate(`/checkout/${product.product_id}`)} className="mt-2 w-full">
-                Thanh toán
-              </Button>
-              </div>
-            )}
+                    }}
+                  />
+                  </>
+                )}
+                {user?.user_id === product.winner?.user_id && (product.status === "sold" || product.status === "expired") && (
+                  <>
+                  {!orderStatus?.order_status ? (
+                    <div className="p-4 bg-gray-100 border border-gray-300 rounded-md">
+                    <p className="text-gray-800 font-medium">
+                      Chúc mừng! Bạn đã thắng cuộc đấu giá cho sản phẩm này.
+                    </p>
+                    <Button onClick={() => navigate(`/checkout/${product.product_id}`)} className="mt-2 w-full">
+                      Thanh toán
+                    </Button>
+                    </div>
+                  ) : orderStatus.order_status === "paid" ? (
+                    <div className="p-4 bg-green-100 border border-green-300 rounded-md">
+                    <p className="text-green-800 font-medium">
+                      Bạn đã thanh toán cho sản phẩm này. Cảm ơn bạn!
+                    </p>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-yellow-100 border border-yellow-300 rounded-md">
+                    <p className="text-yellow-800 font-medium">
+                      Giao dịch này đã bị hủy!
+                    </p>
+                    </div>
+                  )}
+                  {(() => {
+                    const reviewStatus = getReviewStatus(product.product_id);
+                    return reviewStatus ? (
+                    // Đã đánh giá
+                    <div className="p-4 bg-blue-100 border border-blue-300 rounded-md mt-2">
+                      <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {reviewStatus.rating_point === 1 ? (
+                        <>
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          <p className="text-blue-800 font-medium">
+                          Bạn đã đánh giá người bán này
+                          </p>
+                        </>
+                        ) : (
+                        <>
+                          <Ban className="h-4 w-4 text-red-600" />
+                          <p className="text-blue-800 font-medium">
+                          Bạn đã gửi báo cáo cho người bán này
+                          </p>
+                        </>
+                        )}
+                      </div>
+                      </div>
+                      <Button 
+                      onClick={() => handleEditRating(product.product_id)}
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 w-full"
+                      >
+                      Chỉnh sửa đánh giá
+                      </Button>
+                    </div>
+                    ) : (
+                    // Chưa đánh giá
+                    <Button
+                      onClick={() => handleOpenRatingModal(product)}
+                      className="mt-2 w-full"
+                    >
+                      Đánh giá người bán
+                    </Button>
+                    );
+                  })()}
+                  </>
+                )}
 
-            {/* Meta Info */}
+                {/* Meta Info */}
             <div className="grid grid-cols-2 gap-4 pt-4 border-t">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">
@@ -1094,6 +1217,24 @@ export function ProductDetail() {
           </Card>
         )}
       </div>
+    {/* Rating Modal */}
+    {selectedRatingProduct && (
+      <RatingModal
+        isOpen={isRatingModalOpen}
+        onClose={() => {
+          setIsRatingModalOpen(false);
+          setSelectedRatingProduct(null);
+          setSelectedRating(null);
+        }}
+        targetUser={{
+          id: selectedRatingProduct.seller?.user_id,
+          name: selectedRatingProduct.seller?.full_name
+        }}
+        productId={selectedRatingProduct.product_id}
+        initialData={selectedRating}
+        onSubmit={handleRatingSubmit}
+      />
+    )}
 
       {/* Bid Confirmation Dialog */}
       <Dialog open={isConfirmingBid} onOpenChange={setIsConfirmingBid}>

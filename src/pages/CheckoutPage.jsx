@@ -207,8 +207,8 @@ export default function CheckoutPage() {
           <div className="lg:col-span-1">
             {shippingAddress ? (
               <PaymentForm
-                productId={product.product_name}
-                totalAmount={formatCurrency(product.current_price)}
+                productId={product.product_id}
+                totalAmount={product.current_price}
                 shippingAddress={`${shippingAddress}`}
                 onSuccess={handlePaymentSuccess}
               />
