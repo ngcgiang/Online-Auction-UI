@@ -26,7 +26,9 @@ export const cancelOrderByProductId = async (productId) => {
  * 
  */
 export const markShippedByProductId = async (productId) => {
-  return apiClient.put(`${API_BASE_URL}/shipped/${productId}`);
+  return apiClient.put(`${API_BASE_URL}/shipped/`,
+    { product_id: productId }
+  );
 }
 
 /** Mark delivered by product ID

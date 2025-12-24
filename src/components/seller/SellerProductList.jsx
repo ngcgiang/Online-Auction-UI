@@ -399,54 +399,54 @@ const SellerProductList = () => {
                     </td>
                     <td>
                       <div className="flex gap-2 px-6 py-4">
-                        {paymentStatus[product.product_id] ? (
-                          // LOGIC KHI ĐÃ THANH TOÁN
-                          deliveryStatusMap[product.product_id] === 'shipped' ? (
-                            // Trường hợp 1: Đã gửi hàng -> Hiện Badge
-                            <span className="px-3 py-1 rounded text-sm font-medium bg-blue-100 text-blue-700">
-                              Đã gửi hàng
-                            </span>
-                          ) : deliveryStatusMap[product.product_id] === 'pending' ? (
-                            // Trường hợp 2: Trạng thái 'delivered' -> Hiện nút Gửi hàng
-                            // (Lưu ý: Bạn hãy kiểm tra lại logic này, thường là trạng thái 'chờ' mới hiện nút Gửi)
-                            <button
-                              onClick={() => openConfirmDialog('ship', product.product_id, product.product_name)}
-                              disabled={isActionLoading}
-                              className="px-3 py-1 rounded text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              Gửi hàng
-                            </button>
-                          ) : deliveryStatusMap[product.product_id] === 'delivered' ? (
-                            <span className="px-3 py-1 rounded text-sm font-medium bg-blue-100 text-blue-700">
-                              Đã nhận hàng
-                            </span>
+                        {hasWinner ? (
+                          // 1. NẾU CÓ NGƯỜI THẮNG (Logic cũ của bạn)
+                          paymentStatus[product.product_id] ? (
+                            // ĐÃ THANH TOÁN
+                            deliveryStatusMap[product.product_id] === 'shipped' ? (
+                              <span className="px-3 py-1 rounded text-sm font-medium bg-blue-100 text-blue-700">
+                                Đã gửi hàng
+                              </span>
+                            ) : deliveryStatusMap[product.product_id] === 'pending' ? (
+                              <button
+                                onClick={() => openConfirmDialog('ship', product.product_id, product.product_name)}
+                                disabled={isActionLoading}
+                                className="px-3 py-1 rounded text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              >
+                                Gửi hàng
+                              </button>
+                            ) : deliveryStatusMap[product.product_id] === 'delivered' ? (
+                              <span className="px-3 py-1 rounded text-sm font-medium bg-blue-100 text-blue-700">
+                                Đã nhận hàng
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => openConfirmDialog('cancel', product.product_id, product.product_name)}
+                                disabled={isActionLoading}
+                                className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              >
+                                Hủy giao dịch
+                              </button>
+                            )
                           ) : (
-                            // Trường hợp 3: Các trạng thái còn lại -> Hiện nút Hủy
-                            <button
-                              onClick={() => openConfirmDialog('cancel', product.product_id, product.product_name)}
-                              disabled={isActionLoading}
-                              className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              Hủy giao dịch
-                            </button>
+                            // CHƯA THANH TOÁN
+                            deliveryStatusMap[product.product_id] === 'cancelled' ? (
+                              <span className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700">
+                                Đã hủy
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => openConfirmDialog('cancel', product.product_id, product.product_name)}
+                                disabled={isActionLoading}
+                                className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              >
+                                Hủy giao dịch
+                              </button>
+                            )
                           )
                         ) : (
-                           deliveryStatusMap[product.product_id] === 'cancelled' ? (
-                            // Trường hợp 4: Đã hủy -> Hiện Badge
-                            <span className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700">
-                              Đã hủy
-                            </span> 
-                          ) : (
-                          // LOGIC KHI CHƯA THANH TOÁN
-                          // Trường hợp 3: Các trạng thái còn lại -> Hiện nút Hủy
-                            <button
-                              onClick={() => openConfirmDialog('cancel', product.product_id, product.product_name)}
-                              disabled={isActionLoading}
-                              className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              Hủy giao dịch
-                            </button>
-                          )
+                          // 2. NẾU KHÔNG CÓ NGƯỜI THẮNG (Phần bạn muốn thêm)
+                          <span className="text-slate-500 text-sm">-</span>
                         )}
                       </div>
                     </td>
