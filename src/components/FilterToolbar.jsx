@@ -27,6 +27,7 @@ export function FilterToolbar({ onFilterChange }) {
     const fetchCategories = async () => {
       try {
         const response = await getCategories();
+        console.log("Categories response:", response);
         if (response && response.success) {
           const hierarchicalCategories = organizeCategoriesHierarchy(response.data);
           setCategories(hierarchicalCategories);
@@ -150,7 +151,7 @@ export function FilterToolbar({ onFilterChange }) {
               min="1"
               value={filters.newMinutes}
               onChange={(e) =>
-                handleChange("newMinutes", parseInt(e.target.value) || 60)
+                handleChange("newMinutes", e.target.value === "" ? "" : parseInt(e.target.value) || 60)
               }
             />
           </div>

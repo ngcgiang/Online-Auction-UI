@@ -43,7 +43,7 @@ export function Home() {
     keyword: "",
     category: "",
     sortBy: "time",
-    newMinutes: 60,
+    newMinutes: '',
   });
 
   // Fetch top stats on mount
