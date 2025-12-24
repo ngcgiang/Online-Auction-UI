@@ -17,6 +17,7 @@ import  AdminManagementPage  from "./pages/AdminManagementPage.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { UpdateUserPage } from "./pages/UpdateUserPage.jsx";
 import CheckoutPage from "./pages/CheckoutPage.jsx";
+import ChatPage from '@/pages/ChatPage';
 
 // Load Stripe - Replace with your actual publishable key
 const stripePromise = loadStripe(
@@ -62,7 +63,9 @@ const router = createBrowserRouter([
   {
     path: "/checkout/:productId",
     element: <CheckoutPage />,
-  }
+  },
+  { path: '/chat',
+    element: <ChatPage /> }
 ]);
 
 const root = document.getElementById("root");

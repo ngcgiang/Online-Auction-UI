@@ -12,6 +12,7 @@ import { UpdateUserPage } from "./UpdateUserPage"
 import { UserWatchListPage } from "./UserWatchListPage"
 import { UserBiddedProductsPage } from "./UserBiddedPage"
 import { UserRatingsPage } from "./UserRatingsPage"
+import ChatRoom from "@/components/ChatRoom"
 import { UserWonProductsPage } from "./UserWonProducts"
 export function UserProfilePage() {
   const navigate = useNavigate()
@@ -42,11 +43,51 @@ export function UserProfilePage() {
     fetchUserProfile()
   }, [authUser?.user_id, navigate])
 
+  const pageHeaders = {
+    profile: {
+      title: "Hồ sơ của tôi",
+      description: "Quản lý thông tin cá nhân"
+    },
+    chat: {
+      title: "Hộp thư",
+      description: "Quản lý tin nhắn giữa bạn và người bán/người mua"
+    },
+    edit: {
+      title: "Chỉnh sửa thông tin cá nhân",
+      description: "Cập nhật các thông tin cơ bản của bạn"
+    },
+    password: {
+      title: "Đổi mật khẩu",
+      description: "Thay đổi mật khẩu đăng nhập tài khoản của bạn"
+    },
+    watchlist: {
+      title: "Danh sách theo dõi",
+      description: "Các sản phẩm bạn đang theo dõi và quan tâm"
+    },
+    "bidded-products": {
+      title: "Sản phẩm đã tham gia",
+      description: "Các sản phẩm bạn đã tham gia đấu giá"
+    },
+    "won-products": {
+      title: "Sản phẩm đã thắng",
+      description: "Các sản phẩm bạn đã thắng đấu giá"
+    },
+    ratings: {
+      title: "Đánh giá",
+      description: "Các đánh giá về bạn từ những người khác"
+    }
+  }
+
   const sidebarItems = [
     {
       key: "profile",
       label: "Thông tin cá nhân",
       icon: User,
+    },
+    {
+      key: "chat",
+      label: "Hộp thư",
+      icon: MessageCircleMore,
     },
     {
       key: "edit",
@@ -131,15 +172,22 @@ export function UserProfilePage() {
         {/* Main Content */}
         <section className="flex-1 min-w-0">
           <div className="container mx-auto px-4 py-8 max-w-5xl">
+            {/* Page Header */}
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-foreground mb-2">Hồ sơ của tôi</h1>
-              <p className="text-muted-foreground">Quản lý thông tin cá nhân và cài đặt tài khoản</p>
+              <h1 className="text-3xl font-bold text-foreground mb-2">{pageHeaders[activeTab]?.title}</h1>
+              <p className="text-muted-foreground">{pageHeaders[activeTab]?.description}</p>
             </div>
             <div>
               {activeTab === "profile" && <UserProfile user={userData} loading={loading} error={!!error} />}
               {activeTab === "edit" && (
                 <div className="bg-white rounded-xl shadow-sm border p-6">
                   <UpdateUserPage onlyProfileTab />
+                </div>
+              )}
+              {/*Chat tab */}
+              {activeTab === "chat" && (
+                <div className="bg-white rounded-xl shadow-sm border p-6">
+                  <ChatRoom />
                 </div>
               )}
               {activeTab === "password" && (
