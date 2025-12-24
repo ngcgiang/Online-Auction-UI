@@ -19,7 +19,7 @@ export const createSocketInstance = (withAuth = true) => {
 
   // Add authentication if token exists
   if (withAuth) {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('access_token');
     if (token) {
       socketConfig.auth = {
         token: token,

@@ -12,6 +12,7 @@ import { UpdateUserPage } from "./UpdateUserPage"
 import { UserWatchListPage } from "./UserWatchListPage"
 import { UserBiddedProductsPage } from "./UserBiddedPage"
 import { UserRatingsPage } from "./UserRatingsPage"
+import ChatRoom from "@/components/ChatRoom"
 import { UserWonProductsPage } from "./UserWonProducts"
 export function UserProfilePage() {
   const navigate = useNavigate()
@@ -47,6 +48,11 @@ export function UserProfilePage() {
       key: "profile",
       label: "Thông tin cá nhân",
       icon: User,
+    },
+    {
+      key: "chat",
+      label: "Hộp thư",
+      icon: MessageCircleMore,
     },
     {
       key: "edit",
@@ -140,6 +146,12 @@ export function UserProfilePage() {
               {activeTab === "edit" && (
                 <div className="bg-white rounded-xl shadow-sm border p-6">
                   <UpdateUserPage onlyProfileTab />
+                </div>
+              )}
+              {/*Chat tab */}
+              {activeTab === "chat" && (
+                <div className="bg-white rounded-xl shadow-sm border p-6">
+                  <ChatRoom />
                 </div>
               )}
               {activeTab === "password" && (
