@@ -172,7 +172,7 @@ export function UserProfile({ user, loading = false, error = false }) {
             <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
               <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
               <span className="font-semibold text-lg">{user.rating_score}</span>
-              <span className="text-sm text-muted-foreground">/ 10</span>
+              <span className="text-sm text-muted-foreground">/ 1</span>
             </div>
           )}
         </div>
