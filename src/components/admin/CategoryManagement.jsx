@@ -40,6 +40,7 @@ const CategoryManagement = () => {
       setLoading(true);
       const response = await getCategories();
       if (response && response.success) {
+        console.log('Fetched categories:', response.data);
         const categoriesData = Array.isArray(response.data?.list) 
           ? response.data.list 
           : Array.isArray(response.data) 
@@ -58,7 +59,7 @@ const CategoryManagement = () => {
     }
   };
 
-  // Build hierarchical tree structure
+  // Build 2-level category tree (parent + children only)
   const buildCategoryTree = () => {
     const categoryMap = {};
     const tree = [];
@@ -71,7 +72,7 @@ const CategoryManagement = () => {
       };
     });
 
-    // Second pass: build tree structure
+    // Second pass: build tree structure (only 2 levels)
     categories.forEach(category => {
       if (category.parent_id === null) {
         tree.push(categoryMap[category.category_id]);
@@ -81,6 +82,13 @@ const CategoryManagement = () => {
           parent.children.push(categoryMap[category.category_id]);
         }
       }
+    });
+
+    // Only keep 2 levels: remove children of children
+    tree.forEach(parent => {
+      parent.children.forEach(child => {
+        child.children = []; // Remove grandchildren
+      });
     });
 
     return tree;
@@ -106,10 +114,15 @@ const CategoryManagement = () => {
     }
 
     try {
-      const response = await createNewCategory({
+      // Only send parent_id if it's not null
+      const payload = {
         category_name: newCategory.category_name,
-        parent_id: newCategory.parent_id,
-      });
+      };
+      if (newCategory.parent_id !== null) {
+        payload.parent_id = newCategory.parent_id;
+      }
+
+      const response = await createNewCategory(payload);
 
       if (response && response.success) {
         setMessage({
