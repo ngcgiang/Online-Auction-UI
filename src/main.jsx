@@ -53,10 +53,42 @@ const router = createBrowserRouter([
   {
     path: "/seller-management",
     element: <SellerManagementPage />,
+    children: [
+      {
+        path: "",
+        element: <SellerManagementPage />,
+      },
+      {
+        path: "product-list",
+        element: <SellerManagementPage />,
+      },
+      {
+        path: "create",
+        element: <SellerManagementPage />,
+      },
+    ],
   },
   {
     path: "/admin-management",
     element: <AdminManagementPage />,
+    children: [
+      {
+        path: "",
+        element: <AdminManagementPage />,
+      },
+      {
+        path: "categories",
+        element: <AdminManagementPage />,
+      },
+      {
+        path: "products",
+        element: <AdminManagementPage />,
+      },
+      {
+        path: "users",
+        element: <AdminManagementPage />,
+      },
+    ],
   },{
     path: "/edit-profile",
     element: <UpdateUserPage />,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Header } from "@/components/Header";
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -10,12 +10,26 @@ import UserManagement from '@/components/admin/UserManagement';
 
 const AdminManagementPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading } = useAuth();
-  const [activeSection, setActiveSection] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  useEffect(() => {
-    // Redirect if not authenticated
+  // Determine active section from URL
+  const getActiveSectionFromUrl = () => {
+    const pathname = location.pathname;
+    if (pathname.includes('categories')) return 'categories';
+    if (pathname.includes('products')) return 'products';
+    if (pathname.includes('users')) return 'users';
+    return 'dashboard';
+  };
+
+  const [activeSection, setActiveSection] = useState(getActiveSectionFromUrl());
+
+  useEffect(() => {    // Update active section when URL changes
+    setActiveSection(getActiveSectionFromUrl());
+  }, [location.pathname]);
+
+  useEffect(() => {    // Redirect if not authenticated
     if (!loading && !user) {
       navigate('/login', { state: { from: location } });
       return;
@@ -66,7 +80,23 @@ const AdminManagementPage = () => {
         {/* Sidebar */}
         <AdminSidebar 
           activeSection={activeSection} 
-          onNavigate={setActiveSection}
+          onNavigate={(section) => {
+            setActiveSection(section);
+            // Navigate to the corresponding URL
+            if (section === 'dashboard') {
+              navigate('/admin-management');
+            } else if (section === 'categories') {
+              navigate('/admin-management/categories');
+            } else if (section === 'products') {
+              navigate('/admin-management/products');
+            } else if (section === 'users') {
+              navigate('/admin-management/users');
+            }
+            // Close sidebar on mobile after selection
+            if (window.innerWidth < 768) {
+              setIsSidebarOpen(false);
+            }
+          }}
           isOpen={isSidebarOpen}
           onToggle={setIsSidebarOpen}
         />

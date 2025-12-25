@@ -27,7 +27,7 @@ export function FilterToolbar({ onFilterChange }) {
     const fetchCategories = async () => {
       try {
         const response = await getCategories();
-        console.log("Categories response:", response);
+
         if (response && response.success) {
           const hierarchicalCategories = organizeCategoriesHierarchy(response.data);
           setCategories(hierarchicalCategories);

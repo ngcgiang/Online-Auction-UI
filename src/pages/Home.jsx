@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { TopStatsSection } from "@/components/TopStatsSection";
 import { FilterToolbar } from "@/components/FilterToolbar";
@@ -20,6 +21,8 @@ import {
 } from "@/services/productService";
 
 export function Home() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   // State for top stats
   const [topStats, setTopStats] = useState({
     endingSoon: [],
@@ -32,18 +35,18 @@ export function Home() {
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [pagination, setPagination] = useState({
-    currentPage: 1,
+    currentPage: parseInt(searchParams.get("page")) || 1,
     pageSize: 12,
     totalPages: 1,
     totalItems: 0,
   });
 
-  // State for filters
+  // State for filters - Initialize from URL params
   const [filters, setFilters] = useState({
-    keyword: "",
-    category: "",
-    sortBy: "time",
-    newMinutes: '',
+    keyword: searchParams.get("keyword") || "",
+    category: searchParams.get("category") || "",
+    sortBy: searchParams.get("sortBy") || "time",
+    newMinutes: searchParams.get("newMinutes") || '',
   });
 
   // Fetch top stats on mount
@@ -121,11 +124,30 @@ export function Home() {
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
+    
+    // Update URL with filter params
+    const params = new URLSearchParams();
+    if (newFilters.keyword) params.append("keyword", newFilters.keyword);
+    if (newFilters.category) params.append("category", newFilters.category);
+    if (newFilters.sortBy !== "time") params.append("sortBy", newFilters.sortBy);
+    if (newFilters.newMinutes) params.append("newMinutes", newFilters.newMinutes);
+    
+    setSearchParams(params);
   };
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= pagination.totalPages) {
       setPagination((prev) => ({ ...prev, currentPage: page }));
+      
+      // Update URL with pagination and current filters
+      const params = new URLSearchParams();
+      if (filters.keyword) params.append("keyword", filters.keyword);
+      if (filters.category) params.append("category", filters.category);
+      if (filters.sortBy !== "time") params.append("sortBy", filters.sortBy);
+      if (filters.newMinutes) params.append("newMinutes", filters.newMinutes);
+      if (page > 1) params.append("page", page);
+      
+      setSearchParams(params);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };

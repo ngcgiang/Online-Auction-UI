@@ -66,7 +66,7 @@ const Dashboard = () => {
           ? ordersRes.data
           : ordersRes?.data?.total_orders || 0;
         setTotalOrders(ordersValue);
-        console.log('Total Orders:', ordersRes);
+
         
         const upgradeData = Array.isArray(upgradeRes?.data?.list) 
           ? upgradeRes.data.list 

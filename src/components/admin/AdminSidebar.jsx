@@ -17,7 +17,7 @@ const AdminSidebar = ({ activeSection, onNavigate, isOpen, onToggle }) => {
   const menuItems = [
     {
       id: 'dashboard',
-      label: 'Dashboard',
+      label: 'Thống kê',
       icon: LayoutDashboard,
       description: 'Tổng quan',
     },
