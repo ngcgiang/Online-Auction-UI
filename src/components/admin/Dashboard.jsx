@@ -168,9 +168,6 @@ const Dashboard = () => {
                 <div className="text-2xl font-bold text-foreground">
                   {formatCurrency(totalIncome)}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  +2.5% từ tháng trước
-                </p>
               </>
             )}
           </CardContent>
@@ -192,9 +189,6 @@ const Dashboard = () => {
                 <div className="text-2xl font-bold text-foreground">
                   {newUsers}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  +18% từ tháng trước
-                </p>
               </>
             )}
           </CardContent>
@@ -216,9 +210,6 @@ const Dashboard = () => {
                 <div className="text-2xl font-bold text-foreground">
                   {totalOrders}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  +12% từ tháng trước
-                </p>
               </>
             )}
           </CardContent>
