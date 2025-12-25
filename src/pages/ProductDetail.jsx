@@ -30,7 +30,7 @@ import { BidInput } from "@/components/BidInput";
 import { useAuth } from "@/context/AuthContext";
 import { postComment } from "@/services/qaService";
 import { toast } from "react-toastify";
-import { getOrderStatusByProductId } from "@/services/orderService";
+import { getOrderStatusByProductId, markDeliveredByProductId } from "@/services/orderService";
 import { getReviewedUsers, rateUser, putRateUser } from '@/services/userService';
 import RatingModal from '@/components/RatingModal';
 
@@ -88,8 +88,10 @@ export function ProductDetail() {
       
       try {
         const response = await getProductDetails(productId);
+        const reviewedRes = await getReviewedUsers();
         if (response && response.success) {
           setProduct(response.data);
+          setReviewedUsersList(reviewedRes.data?.list || []);
         } else {
           setError("Không thể tải thông tin sản phẩm");
         }
@@ -121,7 +123,8 @@ export function ProductDetail() {
   }, [productId]);
 
   const getReviewStatus = (productId) => {
-    return reviewedUsersList.find(review => review.product_id === productId);
+    const reviewStatus = reviewedUsersList.find(review => review.product_id === productId);
+    return reviewStatus;
   };
 
     // Handle mở rating modal
@@ -540,6 +543,26 @@ export function ProductDetail() {
     });
   };
 
+  // Handle mark as delivered
+  const handleMarkDelivered = async (productId) => {
+    try {
+      const response = await markDeliveredByProductId(productId);
+      if (response?.success || response?.data) {
+        // Update order status locally
+        setOrderStatus((prev) => ({
+          ...prev,
+          delivery_status: "delivered",
+        }));
+        toast.success("Xác nhận nhận hàng thành công!");
+      } else {
+        toast.error(response?.message || "Xác nhận nhận hàng thất bại");
+      }
+    } catch (err) {
+      console.error("Error marking as delivered:", err);
+      toast.error("Đã xảy ra lỗi khi xác nhận nhận hàng");
+    }
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case "active":
@@ -935,11 +958,32 @@ export function ProductDetail() {
                     </Button>
                     </div>
                   ) : orderStatus.order_status === "paid" ? (
+                    <>
                     <div className="p-4 bg-green-100 border border-green-300 rounded-md">
                     <p className="text-green-800 font-medium">
                       Bạn đã thanh toán cho sản phẩm này. Cảm ơn bạn!
                     </p>
                     </div>
+                    {orderStatus.delivery_status === "shipped" ? (
+                      <div>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Đơn hàng đang được vận chuyển. Nếu đã nhận vui lòng xác nhận bên dưới.
+                        </p>
+                        <Button
+                          onClick={() => handleMarkDelivered(product.product_id)}
+                          className="mt-2 w-full"
+                        >
+                          Xác nhận đã nhận hàng
+                        </Button>
+                      </div>
+                    ) : orderStatus.delivery_status === "delivered" ? (
+                      <div className="p-4 bg-green-100 border border-green-300 rounded-md mt-2">
+                        <p className="text-green-800 font-medium">
+                          Đơn hàng đã được giao thành công.
+                        </p>
+                      </div>
+                    ) : null}
+                    </>
                   ) : (
                     <div className="p-4 bg-yellow-100 border border-yellow-300 rounded-md">
                     <p className="text-yellow-800 font-medium">
@@ -963,7 +1007,6 @@ export function ProductDetail() {
                         </>
                         ) : (
                         <>
-                          <Ban className="h-4 w-4 text-red-600" />
                           <p className="text-blue-800 font-medium">
                           Bạn đã gửi báo cáo cho người bán này
                           </p>

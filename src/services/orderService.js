@@ -36,5 +36,7 @@ export const markShippedByProductId = async (productId) => {
  * 
  */
 export const markDeliveredByProductId = async (productId) => {
-  return apiClient.put(`${API_BASE_URL}/delivered/${productId}`);
+  return apiClient.put(`${API_BASE_URL}/delivered/`,
+    { product_id: productId }
+  );
 }
