@@ -148,7 +148,7 @@ export function UserProfilePage() {
           } overflow-hidden md:overflow-visible`}
         >
           <div className="p-6">
-            <Button variant="ghost" onClick={() => navigate("/")} className="gap-2 mb-4">
+            <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2 mb-4">
               <ArrowLeft className="h-4 w-4" />
               Quay lại
             </Button>
