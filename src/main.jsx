@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toast } from "./components/ui/toast";
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
@@ -72,11 +73,13 @@ const root = document.getElementById("root");
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
-    <AuthProvider>
-      <Elements stripe={stripePromise}>
-        <RouterProvider router={router} />
-      </Elements>
-      <Toast />
-    </AuthProvider>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
+      <AuthProvider>
+        <Elements stripe={stripePromise}>
+          <RouterProvider router={router} />
+        </Elements>
+        <Toast />
+      </AuthProvider>
+    </GoogleOAuthProvider>
   </React.StrictMode>,
 );

@@ -9,7 +9,9 @@ import { Input } from "@/components/ui/input";
 import { AuthLayout } from "@/components/AuthLayout";
 import { Mail, Lock } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { login } from "@/services/authService";
+import { login, loginWithGoogle } from "@/services/authService";
+import { GoogleLogin } from "@react-oauth/google";
+import { toast } from "react-toastify";
 
 const loginSchema = z.object({
   email: z.string().email("Email không hợp lệ").min(1, "Email là bắt buộc"),
@@ -63,6 +65,51 @@ export function LoginPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      if (!credentialResponse.credential) {
+        setError("Google login failed. Please try again.");
+        return;
+      }
+
+      const response = await loginWithGoogle(credentialResponse.credential);
+
+      if (response?.success && response?.data) {
+        const { user, accessToken, refreshToken } = response.data;
+        
+        // Store in Auth context and localStorage
+        authLogin(user, accessToken, refreshToken);
+        toast.success("Đăng nhập bằng Google thành công!");
+        
+        // Redirect to previous page or home
+        const fromLocation = location.state?.from;
+        if (fromLocation) {
+          navigate(fromLocation, { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
+      } else {
+        setError(response?.message || "Đăng nhập bằng Google thất bại");
+        toast.error(response?.message || "Đăng nhập bằng Google thất bại");
+      }
+    } catch (err) {
+      const errorMessage = err?.response?.data?.message || err?.message || "Đăng nhập bằng Google thất bại. Vui lòng thử lại.";
+      setError(errorMessage);
+      toast.error(errorMessage);
+      console.error("Google login error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Google login failed. Please try again.");
+    toast.error("Google login failed. Please try again.");
   };
 
   return (
@@ -133,6 +180,15 @@ export function LoginPage() {
               {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
             </Button>
           </form>
+          {/* Google Login Button */}
+          <div className="w-full mt-4">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              width="100%"
+              locale="vi_VN"
+            />
+          </div>
 
           {/* Register Link */}
           <div className="mt-6 text-center text-sm">

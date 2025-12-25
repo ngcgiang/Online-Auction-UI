@@ -8,6 +8,10 @@ export const login = async (credentials) => {
   return apiClient.post('/api/auth/login', credentials);
 };
 
+export const loginWithGoogle = async (idToken) => {
+  return apiClient.post('/api/auth/google-login', { idToken });
+}
+
 // User registration
 export const register = async (userInfo) => {
   return apiClient.post('/api/auth/register', userInfo);
