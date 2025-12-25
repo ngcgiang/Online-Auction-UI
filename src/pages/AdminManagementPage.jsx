@@ -7,6 +7,7 @@ import Dashboard from '@/components/admin/Dashboard';
 import CategoryManagement from '@/components/admin/CategoryManagement';
 import ProductManagement from '@/components/admin/ProductManagement';
 import UserManagement from '@/components/admin/UserManagement';
+import SystemConfig from '@/components/admin/SystemConfig';
 
 const AdminManagementPage = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const AdminManagementPage = () => {
     if (pathname.includes('categories')) return 'categories';
     if (pathname.includes('products')) return 'products';
     if (pathname.includes('users')) return 'users';
+    if (pathname.includes('system-config')) return 'system-config';
     return 'dashboard';
   };
 
@@ -67,6 +69,8 @@ const AdminManagementPage = () => {
         return <ProductManagement />;
       case 'users':
         return <UserManagement />;
+      case 'system-config':
+        return <SystemConfig />;
       default:
         return <Dashboard />;
     }
@@ -91,6 +95,8 @@ const AdminManagementPage = () => {
               navigate('/admin-management/products');
             } else if (section === 'users') {
               navigate('/admin-management/users');
+            } else if (section === 'system-config') {
+              navigate('/admin-management/system-config');
             }
             // Close sidebar on mobile after selection
             if (window.innerWidth < 768) {

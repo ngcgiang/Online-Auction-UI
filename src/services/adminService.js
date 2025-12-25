@@ -70,3 +70,12 @@ export const getTotalOrders = async () => {
 export const getMonthlyIncome = async () => {
     return apiClient.get(`/api/admin/monthly-income`);
 }
+
+/** Get system configurations */
+export const getSystemConfig = async () => {
+    return apiClient.get(`/api/admin/config`);
+}
+
+export const updateSystemConfig = async (configData) => {
+    return apiClient.patch(`/api/admin/config`, configData);
+}

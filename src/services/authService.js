@@ -32,7 +32,6 @@ export const resendVerificationEmail = async (email) => {
 
 // Refresh auth token
 export const refreshToken = async () => {
-  console.log("Refreshing token...");
   return apiClient.post('/api/auth/refresh-token');
 };
 

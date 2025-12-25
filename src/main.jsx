@@ -88,6 +88,10 @@ const router = createBrowserRouter([
         path: "users",
         element: <AdminManagementPage />,
       },
+      {
+        path: "system-config",
+        element: <AdminManagementPage />,
+      },
     ],
   },{
     path: "/edit-profile",

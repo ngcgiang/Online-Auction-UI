@@ -4,6 +4,7 @@ import {
   FolderOpen,
   Package,
   Users,
+  Settings,
   ChevronRight,
   Menu,
   X,
@@ -38,6 +39,12 @@ const AdminSidebar = ({ activeSection, onNavigate, isOpen, onToggle }) => {
       label: 'Người dùng',
       icon: Users,
       description: 'Quản lý người dùng',
+    },
+    {
+      id: 'system-config',
+      label: 'Cấu hình hệ thống',
+      icon: Settings,
+      description: 'Quản lý cấu hình',
     },
   ];
 
