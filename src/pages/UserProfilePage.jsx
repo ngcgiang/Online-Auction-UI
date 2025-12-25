@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router"
+import { useNavigate, useLocation } from "react-router"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft,Medal, ChevronRight, User, Edit, KeyRound, Menu, X, ShoppingCart, Heart,MessageCircleMore } from "lucide-react"
@@ -16,12 +16,21 @@ import ChatRoom from "@/components/ChatRoom"
 import { UserWonProductsPage } from "./UserWonProducts"
 export function UserProfilePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user: authUser } = useAuth()
   const [userData, setUserData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [activeTab, setActiveTab] = useState("profile")
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+
+  // Determine active tab from URL path
+  const getActiveTabFromPath = () => {
+    const pathSegments = location.pathname.split('/')
+    const lastSegment = pathSegments[pathSegments.length - 1]
+    return lastSegment || "profile"
+  }
+
+  const activeTab = getActiveTabFromPath()
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -151,7 +160,8 @@ export function UserProfilePage() {
                   <button
                     key={item.key}
                     onClick={() => {
-                      setActiveTab(item.key)
+                      const path = item.key === "profile" ? "/user-profile/profile" : `/user-profile/${item.key}`
+                      navigate(path)
                       if (window.innerWidth < 768) setIsSidebarOpen(false)
                     }}
                     className={`w-full px-4 py-3 rounded-lg flex items-center gap-3 transition-all ${

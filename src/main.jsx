@@ -13,6 +13,7 @@ import { LoginPage } from "./pages/LoginPage.jsx";
 import { RegisterPage } from "./pages/RegisterPage.jsx";
 import { OTPVerificationPage } from "./pages/OTPVerificationPage.jsx";
 import { UserProfilePage } from "./pages/UserProfilePage.jsx";
+import { UserProfile } from "@/components/UserProfile"
 import  SellerManagementPage  from "./pages/SellerManagementPage.jsx";
 import  AdminManagementPage  from "./pages/AdminManagementPage.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
@@ -49,6 +50,44 @@ const router = createBrowserRouter([
   {
     path: "/user-profile",
     element: <UserProfilePage />,
+    children: [
+      {
+        path: "",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "profile",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "chat",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "edit",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "password",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "watchlist",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "bidded-products",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "won-products",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "ratings",
+        element: <UserProfilePage />,
+      },
+    ],
   },
   {
     path: "/seller-management",
