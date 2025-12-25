@@ -222,7 +222,7 @@ export function Header() {
                     <button
                       onClick={() => {
                         setIsProfileOpen(false);
-                        navigate('/user-profile');
+                        navigate('/user-profile/profile');
                       }}
                       className="w-full text-left px-4 py-2 text-sm hover:bg-accent flex items-center gap-2"
                     >

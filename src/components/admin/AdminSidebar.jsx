@@ -4,6 +4,7 @@ import {
   FolderOpen,
   Package,
   Users,
+  Settings,
   ChevronRight,
   Menu,
   X,
@@ -17,7 +18,7 @@ const AdminSidebar = ({ activeSection, onNavigate, isOpen, onToggle }) => {
   const menuItems = [
     {
       id: 'dashboard',
-      label: 'Dashboard',
+      label: 'Thống kê',
       icon: LayoutDashboard,
       description: 'Tổng quan',
     },
@@ -38,6 +39,12 @@ const AdminSidebar = ({ activeSection, onNavigate, isOpen, onToggle }) => {
       label: 'Người dùng',
       icon: Users,
       description: 'Quản lý người dùng',
+    },
+    {
+      id: 'system-config',
+      label: 'Cấu hình hệ thống',
+      icon: Settings,
+      description: 'Quản lý cấu hình',
     },
   ];
 
@@ -60,7 +67,7 @@ const AdminSidebar = ({ activeSection, onNavigate, isOpen, onToggle }) => {
         <div className="p-6 ">
               <Button
               variant="ghost"
-              onClick={() => navigate("/")}
+              onClick={() => navigate(-1)}
               className="gap-2 mb-4"
             >
               <ArrowLeft className="h-4 w-4" />

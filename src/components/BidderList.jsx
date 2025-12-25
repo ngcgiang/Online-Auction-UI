@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Ban, Loader2 } from 'lucide-react';
 import {
   Card,
@@ -41,6 +41,11 @@ export default function BidderList({
   const [isConfirming, setIsConfirming] = useState(false);
   const [selectedBidder, setSelectedBidder] = useState(null);
   const [isRemoving, setIsRemoving] = useState(false);
+
+  // Sync biddersList khi props bidders thay đổi
+  useEffect(() => {
+    setBiddersList(bidders);
+  }, [bidders]);
 
   // Format tiền VND
   const formatPrice = (price) => {
@@ -169,7 +174,7 @@ export default function BidderList({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                  className="h-8 w-8 flex-shrink-0 opacity-70 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
                   onClick={() => handleOpenConfirm(bidder)}
                   title="Chặn người dùng này"
                 >

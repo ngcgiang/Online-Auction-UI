@@ -53,7 +53,7 @@ const SellerSidebar = ({ activeTab, onNavigate, isOpen, onToggle }) => {
         <div className="p-6">
             <Button
                 variant="ghost"
-                onClick={() => navigate("/")}
+                onClick={() => navigate(-1)}
                 className="gap-2 mb-4"
             >
                 <ArrowLeft className="h-4 w-4" />

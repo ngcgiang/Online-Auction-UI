@@ -55,8 +55,6 @@ const ProductManagement = () => {
       } else {
         response = await getAllProducts(currentPage);
       }
-
-      console.log('API response for products:', response);
       
       // Extract products and pagination info from response
       const productList = response.data || [];
@@ -69,8 +67,6 @@ const ProductManagement = () => {
       
       setProducts(productList);
       setPagination(paginationInfo);
-      console.log('Fetched products:', productList);
-      console.log('Pagination info:', paginationInfo);
     } catch (error) {
       console.error('Error fetching products:', error);
       setMessage({

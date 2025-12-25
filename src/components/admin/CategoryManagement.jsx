@@ -40,7 +40,7 @@ const CategoryManagement = () => {
       setLoading(true);
       const response = await getCategories();
       if (response && response.success) {
-        console.log('Fetched categories:', response.data);
+
         const categoriesData = Array.isArray(response.data?.list) 
           ? response.data.list 
           : Array.isArray(response.data) 

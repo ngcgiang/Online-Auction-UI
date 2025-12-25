@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Header } from "@/components/Header";
 import SellerSidebar from '@/components/seller/SellerSidebar';
@@ -9,12 +9,25 @@ import CreateAuctionProduct from '@/components/CreateAuctionProduct';
 
 const SellerManagementPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  useEffect(() => {
-    // Redirect if not authenticated
+  // Determine active tab from URL
+  const getActiveTabFromUrl = () => {
+    const pathname = location.pathname;
+    if (pathname.includes('product-list')) return 'products';
+    if (pathname.includes('create')) return 'create';
+    return 'overview';
+  };
+
+  const [activeTab, setActiveTab] = useState(getActiveTabFromUrl());
+
+  useEffect(() => {    // Update active tab when URL changes
+    setActiveTab(getActiveTabFromUrl());
+  }, [location.pathname]);
+
+  useEffect(() => {    // Redirect if not authenticated
     if (!loading && !user) {
       navigate('/login', { state: { from: location } });
       return;
@@ -62,7 +75,21 @@ const SellerManagementPage = () => {
         {/* Sidebar */}
         <SellerSidebar 
           activeTab={activeTab} 
-          onNavigate={setActiveTab}
+          onNavigate={(tab) => {
+            setActiveTab(tab);
+            // Navigate to the corresponding URL
+            if (tab === 'overview') {
+              navigate('/seller-management');
+            } else if (tab === 'products') {
+              navigate('/seller-management/product-list');
+            } else if (tab === 'create') {
+              navigate('/seller-management/create');
+            }
+            // Close sidebar on mobile after selection
+            if (window.innerWidth < 768) {
+              setIsSidebarOpen(false);
+            }
+          }}
           isOpen={isSidebarOpen}
           onToggle={setIsSidebarOpen}
         />

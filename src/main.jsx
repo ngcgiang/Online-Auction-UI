@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toast } from "./components/ui/toast";
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
@@ -12,6 +13,7 @@ import { LoginPage } from "./pages/LoginPage.jsx";
 import { RegisterPage } from "./pages/RegisterPage.jsx";
 import { OTPVerificationPage } from "./pages/OTPVerificationPage.jsx";
 import { UserProfilePage } from "./pages/UserProfilePage.jsx";
+import { UserProfile } from "@/components/UserProfile"
 import  SellerManagementPage  from "./pages/SellerManagementPage.jsx";
 import  AdminManagementPage  from "./pages/AdminManagementPage.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
@@ -48,14 +50,88 @@ const router = createBrowserRouter([
   {
     path: "/user-profile",
     element: <UserProfilePage />,
+    children: [
+      {
+        path: "",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "profile",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "chat",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "edit",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "password",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "watchlist",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "bidded-products",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "won-products",
+        element: <UserProfilePage />,
+      },
+      {
+        path: "ratings",
+        element: <UserProfilePage />,
+      },
+    ],
   },
   {
     path: "/seller-management",
     element: <SellerManagementPage />,
+    children: [
+      {
+        path: "",
+        element: <SellerManagementPage />,
+      },
+      {
+        path: "product-list",
+        element: <SellerManagementPage />,
+      },
+      {
+        path: "create",
+        element: <SellerManagementPage />,
+      },
+    ],
   },
   {
     path: "/admin-management",
     element: <AdminManagementPage />,
+    children: [
+      {
+        path: "",
+        element: <AdminManagementPage />,
+      },
+      {
+        path: "categories",
+        element: <AdminManagementPage />,
+      },
+      {
+        path: "products",
+        element: <AdminManagementPage />,
+      },
+      {
+        path: "users",
+        element: <AdminManagementPage />,
+      },
+      {
+        path: "system-config",
+        element: <AdminManagementPage />,
+      },
+    ],
   },{
     path: "/edit-profile",
     element: <UpdateUserPage />,
@@ -72,11 +148,13 @@ const root = document.getElementById("root");
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
-    <AuthProvider>
-      <Elements stripe={stripePromise}>
-        <RouterProvider router={router} />
-      </Elements>
-      <Toast />
-    </AuthProvider>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
+      <AuthProvider>
+        <Elements stripe={stripePromise}>
+          <RouterProvider router={router} />
+        </Elements>
+        <Toast />
+      </AuthProvider>
+    </GoogleOAuthProvider>
   </React.StrictMode>,
 );
