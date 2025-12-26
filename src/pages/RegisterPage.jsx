@@ -63,9 +63,9 @@ export function RegisterPage() {
     <AuthLayout>
       <Card className="border border-border/50 shadow-sm">
         <CardHeader className="space-y-2 text-center">
-          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
+          <CardTitle className="text-2xl font-bold">Tạo tài khoản</CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
-            Enter your information to get started
+            Nhập thông tin của bạn để bắt đầu
           </CardDescription>
         </CardHeader>
 
@@ -139,7 +139,7 @@ export function RegisterPage() {
               </label>
               <Input
                 type="text"
-                placeholder="123 Main St, City, Country"
+                placeholder="123 Lò Gốm, Thành phố, Quốc gia"
                 {...register("address")}
                 disabled={isLoading}
                 className="h-10"

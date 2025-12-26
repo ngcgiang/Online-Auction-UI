@@ -116,9 +116,9 @@ export function LoginPage() {
     <AuthLayout>
       <Card className="border border-border/50 shadow-sm">
         <CardHeader className="space-y-2 text-center">
-          <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+          <CardTitle className="text-2xl font-bold">Chào mừng trở lại</CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
-            Enter your credentials to access your account
+            Nhập thông tin của bạn để đăng nhập
           </CardDescription>
         </CardHeader>
 
