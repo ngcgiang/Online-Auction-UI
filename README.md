@@ -317,10 +317,3 @@ This project is proprietary software for the Automated Auction System.
 ---
 
 **Built with ❤️ using React, Vite, and Tailwind CSS**
-
-**Status**: ✅ Production Ready | **Last Updated**: 2024
-
-````js
-// Development Server: npm run dev
-// Build Command: npm run build
-// API Base: http://localhost:3000 (configurable)
