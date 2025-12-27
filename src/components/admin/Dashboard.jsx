@@ -13,6 +13,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LabelList,
 } from 'recharts';
 import {
   getTotalIncome,
@@ -20,7 +21,11 @@ import {
   getTotalOrders,
   getMonthlyIncome,
   getUpgradeRequests,
+  countUsersByRole,
+  countProductsByStatus,
+  countAllBids,
 } from '@/services/adminService';
+import { getAllProducts } from '@/services/productService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DollarSign, Users, Package, Clock } from 'lucide-react';
@@ -33,6 +38,7 @@ const Dashboard = () => {
   const [monthlyData, setMonthlyData] = useState([]);
   const [auctionData, setAuctionData] = useState([]);
   const [userDistribution, setUserDistribution] = useState([]);
+  const [totalBids, setTotalBids] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,62 +47,84 @@ const Dashboard = () => {
         setLoading(true);
 
         // Fetch all data in parallel
-        const [incomeRes, usersRes, ordersRes, monthlyRes, upgradeRes] =
-          await Promise.all([
-            getTotalIncome().catch(() => ({ data: 0 })),
-            getNewUsers().catch(() => ({ data: 0 })),
-            getTotalOrders().catch(() => ({ data: 0 })),
-            getMonthlyIncome().catch(() => ({ data: [] })),
-            getUpgradeRequests().catch(() => ({ data: [] })),
-          ]);
+        const [
+          incomeRes,
+          usersRes,
+          ordersRes,
+          monthlyRes,
+          upgradeRes,
+          userRoleRes,
+          productStatusRes,
+          bidsRes,
+        ] = await Promise.all([
+          getTotalIncome().catch(() => ({ data: 0 })),
+          getNewUsers().catch(() => ({ data: { list: { total_new_users: 0 } } })),
+          getTotalOrders().catch(() => ({ data: 0 })),
+          getMonthlyIncome().catch(() => ({ data: [] })),
+          getUpgradeRequests().catch(() => ({ data: [] })),
+          countUsersByRole().catch(() => ({ data: {} })),
+          countProductsByStatus().catch(() => ({ data: {} })),
+          countAllBids().catch(() => ({ data: {} })),
+        ]);
 
-        // Handle data extraction from API responses
-        // getTotalIncome - extract numeric value
+        // Tổng doanh thu
         const incomeValue = typeof incomeRes?.data === 'number'
           ? incomeRes.data
           : incomeRes?.data?.total_income || 0;
         setTotalIncome(incomeValue);
 
-        // getNewUsers - extract total_new_users from object structure
-        const usersValue = usersRes?.data?.list.total_new_users || 0;
+        // Người dùng mới
+        const usersValue = usersRes?.data?.list?.total_new_users || usersRes?.data?.total_new_users || 0;
         setNewUsers(usersValue);
 
-        // getTotalOrders - extract numeric value
+        // Tổng số lượt đấu giá (bids)
+        const bidsValue = bidsRes?.data?.totalBids || 0;
+        setTotalBids(bidsValue);
+
+        // Tổng số đơn hàng (orders)
         const ordersValue = typeof ordersRes?.data === 'number'
           ? ordersRes.data
           : ordersRes?.data?.total_orders || 0;
         setTotalOrders(ordersValue);
-        console.log('Total Orders:', ordersRes);
-        
-        const upgradeData = Array.isArray(upgradeRes?.data?.list) 
-          ? upgradeRes.data.list 
-          : Array.isArray(upgradeRes?.data) 
-          ? upgradeRes.data 
+
+        // Yêu cầu nâng cấp
+        const upgradeData = Array.isArray(upgradeRes?.data?.list)
+          ? upgradeRes.data.list
+          : Array.isArray(upgradeRes?.data)
+          ? upgradeRes.data
           : [];
         setPendingRequests(upgradeData?.length || 0);
 
-        // Mock monthly data if needed
-        const monthlyList = Array.isArray(monthlyRes?.data?.list) 
-          ? monthlyRes.data.list 
-          : Array.isArray(monthlyRes?.data) 
-          ? monthlyRes.data 
+        // Doanh thu theo tháng
+        const monthlyList = Array.isArray(monthlyRes?.data?.list)
+          ? monthlyRes.data.list
+          : Array.isArray(monthlyRes?.data)
+          ? monthlyRes.data
           : [];
-        if (monthlyList.length === 0) {
-          setMonthlyData(generateMockMonthlyData());
-        } else {
-          setMonthlyData(monthlyList);
-        }
+        const transformedMonthlyData = monthlyList.map(item => {
+          if (item.name && item.revenue !== undefined) {
+            return item;
+          }
+          return {
+            name: item.month || item.name || item.period || 'Unknown',
+            revenue: item.revenue || item.income || item.total || 0
+          };
+        });
+        setMonthlyData(transformedMonthlyData);
 
-        // Mock auction data
-        setAuctionData([
-          { name: 'Hoàn thành', value: 450 },
-          { name: 'Đang diễn ra', value: 280 },
+        // Phân phối người dùng (PieChart)
+        const userRoleData = userRoleRes?.data || {};
+        setUserDistribution([
+          { name: 'Seller', value: userRoleData.total_sellers || 0 },
+          { name: 'Bidder', value: userRoleData.total_bidders || 0 },
         ]);
 
-        // Mock user distribution
-        setUserDistribution([
-          { name: 'Bidder', value: 65 },
-          { name: 'Seller', value: 35 },
+        // Trạng thái sản phẩm (BarChart)
+        const productStatusData = productStatusRes?.data?.product_status_counts || {};
+        setAuctionData([
+          { name: 'Đã bán', value: productStatusData.sold || 0 },
+          { name: 'Đang hoạt động', value: productStatusData.active || 0 },
+          { name: 'Đã hết hạn', value: productStatusData.expired || 0 },
         ]);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -108,28 +136,6 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
-  // Mock data generator for monthly income
-  const generateMockMonthlyData = () => {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return months.map((month) => ({
-      name: month,
-      revenue: Math.floor(Math.random() * 50000) + 10000,
-    }));
-  };
-
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -137,8 +143,12 @@ const Dashboard = () => {
     }).format(value);
   };
 
-  const COLORS = ['#3b82f6', '#ef4444'];
   const USER_COLORS = ['#8b5cf6', '#10b981'];
+
+  // Custom label for pie chart to show counts
+  const renderCustomLabel = ({ name, value }) => {
+    return `${name} (${value})`;
+  };
 
   return (
     <div className="space-y-6">
@@ -164,11 +174,9 @@ const Dashboard = () => {
             {loading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <>
-                <div className="text-2xl font-bold text-foreground">
-                  {formatCurrency(totalIncome)}
-                </div>
-              </>
+              <div className="text-2xl font-bold text-foreground">
+                {formatCurrency(totalIncome)}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -185,20 +193,18 @@ const Dashboard = () => {
             {loading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <>
-                <div className="text-2xl font-bold text-foreground">
-                  {newUsers}
-                </div>
-              </>
+              <div className="text-2xl font-bold text-foreground">
+                {newUsers}
+              </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Total Orders Card */}
+        {/* Total Bids Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Tổng Đấu Giá
+              Tổng Lượt Đấu Giá
             </CardTitle>
             <Package className="h-4 w-4 text-purple-600" />
           </CardHeader>
@@ -206,11 +212,9 @@ const Dashboard = () => {
             {loading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <>
-                <div className="text-2xl font-bold text-foreground">
-                  {totalOrders}
-                </div>  
-              </>
+              <div className="text-2xl font-bold text-foreground">
+                {totalBids}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -250,6 +254,10 @@ const Dashboard = () => {
           <CardContent>
             {loading ? (
               <Skeleton className="h-80" />
+            ) : monthlyData.length === 0 ? (
+              <div className="h-80 flex items-center justify-center text-muted-foreground">
+                Không có dữ liệu doanh thu
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={monthlyData}>
@@ -287,6 +295,10 @@ const Dashboard = () => {
           <CardContent>
             {loading ? (
               <Skeleton className="h-80" />
+            ) : userDistribution.length === 0 || userDistribution.every(item => item.value === 0) ? (
+              <div className="h-80 flex items-center justify-center text-muted-foreground">
+                Không có dữ liệu người dùng
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -295,7 +307,7 @@ const Dashboard = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, value }) => `${name} (${value}%)`}
+                    label={renderCustomLabel}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
@@ -307,7 +319,8 @@ const Dashboard = () => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => `${value}%`} />
+                  <Tooltip />
+                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -323,6 +336,10 @@ const Dashboard = () => {
         <CardContent>
           {loading ? (
             <Skeleton className="h-80" />
+          ) : auctionData.length === 0 || auctionData.every(item => item.value === 0) ? (
+            <div className="h-80 flex items-center justify-center text-muted-foreground">
+              Không có dữ liệu đấu giá
+            </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={auctionData}>
@@ -331,7 +348,9 @@ const Dashboard = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="value" fill="#3b82f6" name="Số Lượng" />
+                <Bar dataKey="value" fill="#3b82f6" name="Số Lượng">
+                  <LabelList dataKey="value" position="top" />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}

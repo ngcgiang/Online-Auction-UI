@@ -79,3 +79,14 @@ export const getSystemConfig = async () => {
 export const updateSystemConfig = async (configData) => {
     return apiClient.patch(`/api/admin/config`, configData);
 }
+
+export const countUsersByRole = async () => {
+    return apiClient.get(`/api/admin/count-user-by-role`);
+}
+
+export const countProductsByStatus = async () => {
+    return apiClient.get(`/api/admin/count-products-by-status`);
+}
+export const countAllBids = async () => {
+    return apiClient.get(`/api/admin/count-all-bids`);
+}

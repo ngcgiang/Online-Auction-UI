@@ -28,3 +28,15 @@ export const getProductsBySellerId = async () => {
 export const getExpiredProductsBySellerId = async () => {
   return apiClient.get(`/api/seller/products/ended`);
 }
+
+export const getTotalExpiredProducts = async () => {
+  return apiClient.get('/api/seller/total-expired');
+}
+
+export const getTotalIncome = async () => {
+  return apiClient.get('/api/seller/total-income');
+}
+
+export const getTotalSoldProducts = async () => {
+  return apiClient.get('/api/seller/total-sold');
+}

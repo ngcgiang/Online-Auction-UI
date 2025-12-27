@@ -1,3 +1,23 @@
+/**
+ * Count product status from product list
+ * @param {Array} products - Array of product objects
+ * @returns {Object} - { expired, sold, active }
+ */
+export const countProductStatus = (products = []) => {
+  const statusCount = { expired: 0, sold: 0, active: 0 };
+  products.forEach((p) => {
+    // Chuẩn hóa status về chữ thường và loại bỏ dấu cách
+    const status = (p.status || '').toString().trim().toLowerCase();
+    if (['expired', 'het_han', 'hết hạn', 'da_het_han', 'đã hết hạn'].includes(status)) {
+      statusCount.expired++;
+    } else if (['sold', 'da_ban', 'đã bán'].includes(status)) {
+      statusCount.sold++;
+    } else if (['active', 'dang_hoat_dong', 'đang hoạt động'].includes(status)) {
+      statusCount.active++;
+    }
+  });
+  return statusCount;
+};
 import apiClient from '@/lib/axios';
 
 /**

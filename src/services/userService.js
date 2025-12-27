@@ -48,3 +48,8 @@ export const putRateUser = async (rating_id, data) => {
 export const getReviewedUsers = async () => {
   return apiClient.get(`/api/users/ratings/reviewed`);
 }
+
+// Get user role distribution (bidder, seller, etc)
+export const getUserRoleDistribution = async () => {
+  return apiClient.get('/api/admin/user-role-distribution');
+};
