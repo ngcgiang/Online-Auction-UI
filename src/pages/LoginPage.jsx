@@ -200,7 +200,16 @@ export function LoginPage() {
               Đăng ký ngay
             </Link>
           </div>
-        {/* Back to Home Link */}
+          {/* Forgot Password Link */}
+          <div className="mt-4 text-center text-sm">
+            <Link
+              to="/reset-password"
+              className="font-medium text-blue-600 hover:underline transition-colors"
+            >
+              Quên mật khẩu?
+            </Link>
+          </div>
+          {/* Back to Home Link */}
           <div className="mt-4 text-center text-sm">
             <Link
               to="/"

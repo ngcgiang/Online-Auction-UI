@@ -29,6 +29,7 @@ import { getAllProducts } from '@/services/productService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DollarSign, Users, Package, Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const [totalIncome, setTotalIncome] = useState(0);
@@ -152,6 +153,7 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
+      
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>

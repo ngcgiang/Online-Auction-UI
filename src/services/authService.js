@@ -39,5 +39,14 @@ export const refreshToken = async () => {
 export const logout = async () => {
   return apiClient.post('/api/auth/logout');
 };
-
+export const requestPasswordReset = async (email) => {
+  return apiClient.patch('/api/users/password-reset', { email });
+}
+export const resetPassword = async (email, otp_code, newPassword) => {
+  return apiClient.patch('/api/users/new-password', {
+    email,
+    otp_code,
+    newPassword
+  });
+};
 

@@ -20,6 +20,7 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import { UpdateUserPage } from "./pages/UpdateUserPage.jsx";
 import CheckoutPage from "./pages/CheckoutPage.jsx";
 import ChatPage from '@/pages/ChatPage';
+import ResetPasswordPage  from "./pages/ResetPasswordPage.jsx";
 
 // Load Stripe - Replace with your actual publishable key
 const stripePromise = loadStripe(
@@ -46,6 +47,10 @@ const router = createBrowserRouter([
   {
     path: "/verify-otp",
     element: <OTPVerificationPage />,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPasswordPage />,
   },
   {
     path: "/user-profile",
