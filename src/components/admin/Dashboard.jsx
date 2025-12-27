@@ -79,8 +79,9 @@ const Dashboard = () => {
         setNewUsers(usersValue);
 
         // Tổng số lượt đấu giá (bids)
-        const bidsValue = bidsRes?.data?.totalBids || 0;
+        const bidsValue = bidsRes?.data?.total_bids || 0;
         setTotalBids(bidsValue);
+        console.log('Total Bids:', bidsValue);
 
         // Tổng số đơn hàng (orders)
         const ordersValue = typeof ordersRes?.data === 'number'
