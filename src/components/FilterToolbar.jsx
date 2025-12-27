@@ -136,7 +136,6 @@ export function FilterToolbar({ onFilterChange }) {
               <SelectContent>
                 <SelectItem value="time">Thời gian kết thúc giảm dần</SelectItem>
                 <SelectItem value="price">Giá tăng dần</SelectItem>
-                <SelectItem value="bid">Nhiều lượt đấu giá nhất</SelectItem>
               </SelectContent>
             </Select>
           </div>
