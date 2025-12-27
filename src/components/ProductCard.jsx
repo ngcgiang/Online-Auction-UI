@@ -1,9 +1,12 @@
 import { useNavigate } from "react-router";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Clock, Gavel, Calendar } from "lucide-react";
+import { Clock, Gavel, Calendar, Heart } from "lucide-react";
 import { formatPrice, calculateTimeRemaining } from "@/services/productService";
+import { addToWatchList, removeFromWatchList, getWatchListByUserId } from "@/services/watchListService";
+import { useAuth } from "@/context/AuthContext";
 
 const getPermissionBadge = (permission) => {
   return (
@@ -17,6 +20,50 @@ const getPermissionBadge = (permission) => {
 
 export function ProductCard({ product, loading }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
+
+  // Load favorite status on mount or when user/product changes
+  useEffect(() => {
+    if (user && product) {
+      loadFavoriteStatus();
+    }
+  }, [user, product?.product_id]);
+
+  const loadFavoriteStatus = async () => {
+    try {
+      const response = await getWatchListByUserId(user.user_id);
+      const watchListIds = response.data.map(item => item.product_id);
+      setIsFavorited(watchListIds.includes(product.product_id));
+    } catch (error) {
+      console.error("Error loading favorite status:", error);
+    }
+  };
+
+  const handleFavoriteClick = async (e) => {
+    e.stopPropagation();
+
+    // Check if user is logged in
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    setIsLoadingFavorite(true);
+    try {
+      if (isFavorited) {
+        await removeFromWatchList(user.user_id, product.product_id);
+      } else {
+        await addToWatchList(user.user_id, product.product_id);
+      }
+      setIsFavorited(!isFavorited);
+    } catch (error) {
+      console.error("Error updating favorite:", error);
+    } finally {
+      setIsLoadingFavorite(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -68,6 +115,22 @@ export function ProductCard({ product, loading }) {
             Đã bán
           </Badge>
         )}
+        
+        {/* Favorite Button */}
+        <button
+          onClick={handleFavoriteClick}
+          disabled={isLoadingFavorite}
+          className="absolute top-2 left-2 z-10 p-2 rounded-full bg-white/80 hover:bg-white transition-colors disabled:opacity-50"
+          title={isFavorited ? "Bỏ yêu thích" : "Thêm yêu thích"}
+        >
+          <Heart
+            className={`h-5 w-5 transition-colors ${
+              isFavorited
+                ? "fill-red-500 text-red-500"
+                : "text-gray-600 hover:text-red-500"
+            }`}
+          />
+        </button>
       </div>
 
       <CardContent className="p-4">
@@ -83,6 +146,14 @@ export function ProductCard({ product, loading }) {
             {formatPrice(product.current_price)}
           </p>
         </div>
+        {/* Buy now value */}
+        {product.buy_now_price && (
+          <div className="mb-4">
+            <p className="text-sm text-muted-foreground">
+              Giá mua ngay: <span className="text-lg font-bold text-primary">{formatPrice(product.buy_now_price)}</span>
+            </p>
+          </div>
+        )}
 
         {/* Bottom Info Block */}
         <div className="space-y-2 text-sm text-muted-foreground">
