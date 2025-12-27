@@ -17,6 +17,14 @@ export default function PaymentForm({ productId, totalAmount, shippingAddress, o
   const [success, setSuccess] = useState(false);
   const [paymentData, setPaymentData] = useState(null);
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+    }).format(amount);
+    };
+
+
   const handlePayment = async (e) => {
     e.preventDefault();
     setError(null);
@@ -108,7 +116,7 @@ export default function PaymentForm({ productId, totalAmount, shippingAddress, o
             <div className="border-t pt-3 flex justify-between">
               <span className="text-lg font-medium">Tổng tiền:</span>
               <span className="text-2xl font-bold text-primary">
-                {totalAmount}
+                {formatCurrency(totalAmount)}
               </span>
             </div>
           </div>
