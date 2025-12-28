@@ -15,6 +15,7 @@ const TwoLevelCategorySelector = ({ control, errors }) => {
   const [categories, setCategories] = useState([]);
   const [parentCategories, setParentCategories] = useState([]);
   const [childCategories, setChildCategories] = useState([]);
+  const [selectedParentId, setSelectedParentId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   
   // Watch category_id value từ form
@@ -49,10 +50,11 @@ const TwoLevelCategorySelector = ({ control, errors }) => {
     fetchCategories();
   }, []);
 
-  // FIX: Cập nhật child categories khi watched category_id thay đổi
+  // Cập nhật child categories khi parent được chọn
   useEffect(() => {
     if (!watchedCategoryId) {
       setChildCategories([]);
+      setSelectedParentId(null);
       return;
     }
 
@@ -63,13 +65,24 @@ const TwoLevelCategorySelector = ({ control, errors }) => {
 
     if (selectedParent) {
       // Người dùng vừa chọn parent -> lọc child
+      setSelectedParentId(selectedParent.category_id);
       const children = categories.filter(
         cat => cat.parent_id === selectedParent.category_id
       );
       setChildCategories(children);
     } else {
-      // Người dùng đã chọn child hoặc option "Sử dụng danh mục cha"
-      setChildCategories([]);
+      // Người dùng đã chọn child
+      // Tìm parent của child này
+      const selectedChild = categories.find(
+        cat => String(cat.category_id) === String(watchedCategoryId)
+      );
+      if (selectedChild && selectedChild.parent_id) {
+        setSelectedParentId(selectedChild.parent_id);
+        const children = categories.filter(
+          cat => cat.parent_id === selectedChild.parent_id
+        );
+        setChildCategories(children);
+      }
     }
   }, [watchedCategoryId, categories, parentCategories]);
 
@@ -95,23 +108,32 @@ const TwoLevelCategorySelector = ({ control, errors }) => {
           name="category_id"
           control={control}
           rules={{ required: 'Vui lòng chọn danh mục' }}
-          render={({ field }) => (
-            <Select value={field.value || ''} onValueChange={field.onChange}>
-              <SelectTrigger
-                id="parent_category"
-                className={errors.category_id ? 'border-red-500' : ''}
-              >
-                <SelectValue placeholder="Chọn danh mục cha" />
-              </SelectTrigger>
-              <SelectContent>
-                {parentCategories.map((cat) => (
-                  <SelectItem key={cat.category_id} value={String(cat.category_id)}>
-                    {cat.category_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          render={({ field }) => {
+            // Tìm parent category từ selectedParentId hoặc từ form value
+            const currentParentId = selectedParentId || 
+              (watchedCategoryId && parentCategories.find(cat => String(cat.category_id) === String(watchedCategoryId)) ? watchedCategoryId : null);
+            
+            return (
+              <Select value={currentParentId ? String(currentParentId) : ''} onValueChange={(value) => {
+                setSelectedParentId(Number(value));
+                field.onChange(value);
+              }}>
+                <SelectTrigger
+                  id="parent_category"
+                  className={errors.category_id ? 'border-red-500' : ''}
+                >
+                  <SelectValue placeholder="Chọn danh mục cha" />
+                </SelectTrigger>
+                <SelectContent>
+                  {parentCategories.map((cat) => (
+                    <SelectItem key={cat.category_id} value={String(cat.category_id)}>
+                      {cat.category_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            );
+          }}
         />
         {errors.category_id && (
           <p className="text-sm text-red-500 flex items-center gap-1">
@@ -130,29 +152,32 @@ const TwoLevelCategorySelector = ({ control, errors }) => {
           <Controller
             name="category_id"
             control={control}
-            render={({ field }) => (
-              <Select value={field.value || ''} onValueChange={field.onChange}>
-                <SelectTrigger
-                  id="child_category"
-                  className={errors.category_id ? 'border-red-500' : ''}
-                >
-                  <SelectValue placeholder="Chọn danh mục con (hoặc để trống)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {/* Option to select parent category */}
-                  <SelectItem value={String(watchedCategoryId)}>
-                    Sử dụng danh mục cha
-                  </SelectItem>
-                  
-                  {/* Child categories */}
-                  {childCategories.map((cat) => (
-                    <SelectItem key={cat.category_id} value={String(cat.category_id)}>
-                      {cat.category_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            render={({ field }) => {
+              // Kiểm tra nếu giá trị hiện tại là child hay parent
+              const isChildSelected = watchedCategoryId && 
+                !parentCategories.find(cat => String(cat.category_id) === String(watchedCategoryId));
+              
+              return (
+                <Select value={isChildSelected ? String(watchedCategoryId) : ''} onValueChange={(value) => {
+                  field.onChange(value);
+                }}>
+                  <SelectTrigger
+                    id="child_category"
+                    className={errors.category_id ? 'border-red-500' : ''}
+                  >
+                    <SelectValue placeholder="Chọn danh mục con hoặc để trống" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* Child categories */}
+                    {childCategories.map((cat) => (
+                      <SelectItem key={cat.category_id} value={String(cat.category_id)}>
+                        {cat.category_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              );
+            }}
           />
           {errors.category_id && (
             <p className="text-sm text-red-500 flex items-center gap-1">
@@ -161,7 +186,7 @@ const TwoLevelCategorySelector = ({ control, errors }) => {
             </p>
           )}
           <p className="text-xs text-muted-foreground">
-            Chọn danh mục con hoặc giữ giá trị danh mục cha
+            Chọn danh mục con để thay đổi hoặc để trống để sử dụng danh mục cha
           </p>
         </div>
       )}

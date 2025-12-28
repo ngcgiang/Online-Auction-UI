@@ -97,7 +97,7 @@ export const formatTimeRemaining = (endTime) => {
   }
 
   // If more than 3 days, show "X ngày Y giờ"
-  if (time.days >= 3) {
+  if (time.days >= 1) {
     return `${time.days} ngày ${time.hours} giờ`;
   }
 
