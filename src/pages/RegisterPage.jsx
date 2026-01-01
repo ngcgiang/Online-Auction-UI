@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { AuthLayout } from "@/components/AuthLayout";
 import { Mail, Lock, User, MapPin } from "lucide-react";
 import { register as registerUser } from "@/services/authService";
+import ReCAPTCHA from "react-google-recaptcha";
 
 const registerSchema = z.object({
   full_name: z.string().min(1, "Tên đầy đủ là bắt buộc"),
@@ -21,6 +22,9 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+  const [recaptchaToken, setRecaptchaToken] = useState("");
+  const recaptchaRef = useRef(null);
 
   const {
     register,
@@ -34,6 +38,12 @@ export function RegisterPage() {
     setIsLoading(true);
     setError("");
 
+    if (!recaptchaToken) {
+      setError("Vui lòng xác minh reCAPTCHA.");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Format data to match backend requirement
       const payload = {
@@ -41,6 +51,7 @@ export function RegisterPage() {
         password: data.password,
         full_name: data.full_name,
         address: data.address,
+        recaptchaToken: recaptchaToken,
       };
 
       const response = await registerUser(payload);
@@ -50,10 +61,20 @@ export function RegisterPage() {
         navigate("/verify-otp", { state: { email: data.email } });
       } else {
         setError(response?.message || "Đăng ký thất bại");
+        // Reset reCAPTCHA on error
+        if (window.grecaptcha) {
+          window.grecaptcha.reset();
+          setRecaptchaToken("");
+        }
       }
     } catch (err) {
       setError(err?.message || "Đăng ký thất bại. Vui lòng thử lại.");
       console.error("Register error:", err);
+      // Reset reCAPTCHA on error
+      if (window.grecaptcha) {
+        window.grecaptcha.reset();
+        setRecaptchaToken("");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -149,6 +170,17 @@ export function RegisterPage() {
                   {errors.address.message}
                 </p>
               )}
+            </div>
+
+            {/* reCAPTCHA */}
+            <div className="flex justify-center">
+              <div id="recaptcha-container">
+                <ReCAPTCHA
+                  sitekey={recaptchaSiteKey}
+                  onChange={(token) => setRecaptchaToken(token)}
+                  ref={recaptchaRef}
+                />
+              </div>
             </div>
 
             {/* Error Message */}
