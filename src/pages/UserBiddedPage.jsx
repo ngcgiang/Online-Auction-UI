@@ -222,27 +222,19 @@ export function UserBiddedProductsPage() {
         }
     }
 
-    const isWinning = (item) => {
-        const product = item.product || item
-        const myBid = item.bid_amount || item.max_bid_amount
-        const currentPrice = product.current_price || product.highest_bid
-        
-        // Check if user's bid is the highest
-        return myBid && currentPrice && parseFloat(myBid) >= parseFloat(currentPrice)
-    }
-
-    const getBidStatus = (item) => {
+    const getBidStatus = (item, currentUserId) => {
         const product = item.product || item
         const isEnded = new Date(product.end_time) <= new Date()
-        const winning = isWinning(item)
+        const winnerId = product.winner_id || product.winner?.user_id
+        const isWinner = currentUserId && winnerId && String(currentUserId) === String(winnerId)
 
         if (isEnded) {
-            return winning ? "won" : "lost"
+            return isWinner ? "won" : "lost"
         }
-        return winning ? "winning" : "outbid"
+        return isWinner ? "winning" : "outbid"
     }
 
-    const getStatusConfig = (status) => {
+    const getStatusConfig = (status, isHighestBidder) => {
         const configs = {
             won: {
                 label: "Đã thắng",
@@ -257,13 +249,13 @@ export function UserBiddedProductsPage() {
                 icon: null
             },
             winning: {
-                label: "Đang dẫn đầu",
-                bgColor: "bg-blue-100",
-                textColor: "text-blue-700",
-                icon: TrendingUp
+                label: isHighestBidder ? "Giá cao nhất" : "Đang dẫn đầu",
+                bgColor: "bg-yellow-100",
+                textColor: "text-yellow-700",
+                icon: isHighestBidder ? Award : TrendingUp
             },
             outbid: {
-                label: "Đã bị vượt",
+                label: "Đã bị vượt giá",
                 bgColor: "bg-orange-100",
                 textColor: "text-orange-700",
                 icon: null
@@ -311,14 +303,23 @@ export function UserBiddedProductsPage() {
                         {paginatedProducts.map((item) => {
                             const product = item.product || item
                             const isEnded = new Date(product.end_time) <= new Date()
-                            const status = getBidStatus(item)
-                            const statusConfig = getStatusConfig(status)
-                            const StatusIcon = statusConfig.icon
                             
+                            // Check if current user is the highest bidder
+                            // Support multiple possible field names for user ID and winner ID
+                            const currentUserId = authUser?.user_id || authUser?.id
+                            const winnerId = product.winner_id || product.winner?.user_id
+                            const isHighestBidder = !isEnded && currentUserId && winnerId && String(currentUserId) === String(winnerId)
+                            
+                            const status = getBidStatus(item, currentUserId)
+                            const statusConfig = getStatusConfig(status, isHighestBidder)
+                            const StatusIcon = statusConfig.icon
+
                             return (
                                 <Card 
                                     key={`${item.product_id || product.product_id}-${item.bid_id}`} 
-                                    className="overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full"
+                                    className={`overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full ${
+                                        status === 'winning' ? 'bg-yellow-50 border-yellow-200' : ''
+                                    }`}
                                 >
                                     {/* Image Section */}
                                     <div className="relative aspect-square bg-gray-100">
@@ -371,17 +372,6 @@ export function UserBiddedProductsPage() {
 
                                         {/* Details Grid */}
                                         <div className="space-y-2 mb-4 flex-grow">
-                                            {/* My Bid */}
-                                            <div className="flex items-start gap-2 text-sm">
-                                                <Gavel className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                                                <div className="flex-1 min-w-0">
-                                                    <span className="text-muted-foreground block">Giá đấu của bạn:</span>
-                                                    <span className="font-semibold text-blue-600 block">
-                                                        {formatPrice(item.bid_amount || item.max_bid_amount)}
-                                                    </span>
-                                                </div>
-                                            </div>
-
                                             {/* Bid Time */}
                                             {(item.bid_time || item.created_at) && (
                                                 <div className="flex items-start gap-2 text-sm">

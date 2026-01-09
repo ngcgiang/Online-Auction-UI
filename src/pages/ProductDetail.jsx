@@ -907,7 +907,24 @@ export function ProductDetail() {
                       currentPrice={product.current_price || 0}
                       stepPrice={parseFloat(product.price_step) || 0}
                       placeBid={handlePlaceBid}
-                    />
+                      // Fixed validation - check if INCREMENT is divisible by step price
+                      validateBid={(bidAmount) => {
+                        // Round to integers to avoid floating point issues
+                        const currentPrice = Math.round(product.current_price || 0);
+                        const stepPrice = Math.round(parseFloat(product.price_step) || 0);
+                        const bidAmountRounded = Math.round(bidAmount);
+                        const increment = bidAmountRounded - currentPrice;
+                        
+                        if (bidAmountRounded <= currentPrice) {
+                          return "Giá đặt phải lớn hơn giá hiện tại.";
+                        }
+                        
+                        if (increment % stepPrice !== 0) {
+                          return `Số tiền tăng thêm phải chia hết cho bước giá (${formatPrice(stepPrice)}).`;
+                        }
+                        return null;
+                      }}
+                    />  
                   </CardContent>
                 </Card>
 
