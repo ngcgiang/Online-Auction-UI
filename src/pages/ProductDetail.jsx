@@ -50,6 +50,7 @@ export function ProductDetail() {
   const location = useLocation();
   const { user } = useAuth();
   const [selectedImage, setSelectedImage] = useState(0);
+  const [isAutoplayPaused, setIsAutoplayPaused] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [product, setProduct] = useState(null);
@@ -105,6 +106,32 @@ export function ProductDetail() {
 
     fetchProduct();
   }, [productId]);
+
+  // Get all images as a combined array
+  const allImages = product?.mainImage 
+    ? [product.mainImage, ...(product.subImages || [])]
+    : product?.subImages || [];
+
+  // Navigate to next image with circular logic
+  const goToNextImage = () => {
+    setSelectedImage((prev) => (prev + 1) % allImages.length);
+  };
+
+  // Navigate to previous image with circular logic
+  const goToPreviousImage = () => {
+    setSelectedImage((prev) => (prev - 1 + allImages.length) % allImages.length);
+  };
+
+  // Auto-play slideshow - changes image every 3 seconds when not paused
+  useEffect(() => {
+    if (allImages.length <= 1 || isAutoplayPaused) return;
+
+    const interval = setInterval(() => {
+      goToNextImage();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [allImages.length, isAutoplayPaused]);
 
   useEffect(() => {
     const fetchOrderStatus = async () => {
@@ -759,15 +786,76 @@ export function ProductDetail() {
         {/* 3-Column Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
                   <div className="lg:col-span-4">
-                    {/* Main Image */}
+                    {/* Main Image with Navigation */}
                     <div className="mb-4">
-                      <div className="aspect-square bg-muted rounded-lg overflow-hidden flex items-center justify-center">
-                        {product.mainImage ? (
-                          <img
-                            src={selectedImage === 0 ? product.mainImage : product.subImages?.[selectedImage - 1]}
-                            alt={product.product_name}
-                            className="w-full h-full object-cover"
-                          />
+                      <div 
+                        className="aspect-square bg-muted rounded-lg overflow-hidden flex items-center justify-center group relative"
+                        onMouseEnter={() => setIsAutoplayPaused(true)}
+                        onMouseLeave={() => setIsAutoplayPaused(false)}
+                      >
+                        {allImages.length > 0 ? (
+                          <>
+                            {/* Main Image with Transition */}
+                            <img
+                              src={allImages[selectedImage]}
+                              alt={product.product_name}
+                              className="w-full h-full object-cover transition-opacity duration-300"
+                            />
+
+                            {/* Navigation Arrows - Only show when multiple images */}
+                            {allImages.length > 1 && (
+                              <>
+                                {/* Previous Button */}
+                                <button
+                                  onClick={goToPreviousImage}
+                                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/75 text-white p-2 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                                  title="Ảnh trước"
+                                  aria-label="Previous image"
+                                >
+                                  <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M15 19l-7-7 7-7"
+                                    />
+                                  </svg>
+                                </button>
+
+                                {/* Next Button */}
+                                <button
+                                  onClick={goToNextImage}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/75 text-white p-2 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                                  title="Ảnh tiếp theo"
+                                  aria-label="Next image"
+                                >
+                                  <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 5l7 7-7 7"
+                                    />
+                                  </svg>
+                                </button>
+
+                                {/* Image Counter */}
+                                <div className="absolute bottom-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                                  {selectedImage + 1} / {allImages.length}
+                                </div>
+                              </>
+                            )}
+                          </>
                         ) : (
                           <span className="text-muted-foreground">
                             Ảnh sản phẩm
@@ -776,44 +864,29 @@ export function ProductDetail() {
                       </div>
                     </div>
 
-                    {/* Thumbnails */}
-                    <div className="grid grid-cols-3 gap-2 mb-6">
-                      <button
-                        onClick={() => setSelectedImage(0)}
-                        className={`aspect-square bg-muted rounded-md overflow-hidden flex items-center justify-center border-2 transition-colors ${
-                          selectedImage === 0
-                            ? "border-primary"
-                            : "border-transparent hover:border-border"
-                        }`}
-                      >
-                        {product.mainImage ? (
-                          <img
-                            src={product.mainImage}
-                            alt="Main"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-xs text-muted-foreground">1</span>
-                        )}
-                      </button>
-                      {product.subImages?.map((image, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setSelectedImage(index + 1)}
-                          className={`aspect-square bg-muted rounded-md overflow-hidden flex items-center justify-center border-2 transition-colors ${
-                            selectedImage === index + 1
-                              ? "border-primary"
-                              : "border-transparent hover:border-border"
-                          }`}
-                        >
-                          <img
-                            src={image}
-                            alt={`Sub ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      ))}
-                    </div>
+                    {/* Thumbnails Grid */}
+                    {allImages.length > 1 && (
+                      <div className="grid grid-cols-4 gap-2 mb-6">
+                        {allImages.map((image, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setSelectedImage(index)}
+                            className={`aspect-square bg-muted rounded-md overflow-hidden flex items-center justify-center border-2 transition-all hover:scale-105 ${
+                              selectedImage === index
+                                ? "border-primary"
+                                : "border-transparent hover:border-border"
+                            }`}
+                            title={`Xem ảnh ${index + 1}`}
+                          >
+                            <img
+                              src={image}
+                              alt={`Product ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Wishlist & Seller Info */}
             <div className="flex items-center gap-4 pt-4 border-t">
