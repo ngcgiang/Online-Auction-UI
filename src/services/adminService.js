@@ -90,3 +90,7 @@ export const countProductsByStatus = async () => {
 export const countAllBids = async () => {
     return apiClient.get(`/api/admin/count-all-bids`);
 }
+
+export const resetUserPassword = async (userId, newPassword, email) => {
+    return apiClient.patch(`/api/admin/reset-user-password/`, { userId, newPassword, email });
+}

@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Edit2, Save, RotateCcw, Mail, MapPin, Cake, Star, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
-import { updateUser } from '@/services/adminService';
+import { updateUser, resetUserPassword } from '@/services/adminService';
 
 const UserDetail = ({ isOpen, onClose, user, onSave }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState(null);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [resetPasswordMsg, setResetPasswordMsg] = useState(null);
   
   const {
     register,
@@ -89,6 +94,36 @@ const UserDetail = ({ isOpen, onClose, user, onSave }) => {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setResetPasswordMsg(null);
+
+    if (!newPassword || !confirmPassword) {
+      setResetPasswordMsg({ type: 'error', text: 'Vui lòng nhập đầy đủ mật khẩu mới và xác nhận.' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setResetPasswordMsg({ type: 'error', text: 'Mật khẩu xác nhận không khớp.' });
+      return;
+    }
+    if (newPassword.length < 6) {
+      setResetPasswordMsg({ type: 'error', text: 'Mật khẩu phải có ít nhất 6 ký tự.' });
+      return;
+    }
+    setIsResettingPassword(true);
+    try {
+      await resetUserPassword(user.user_id, newPassword, user.email);
+      setResetPasswordMsg({ type: 'success', text: 'Đổi mật khẩu thành công. Email đã được gửi cho người dùng.' });
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPasswordForm(false);
+    } catch (error) {
+      setResetPasswordMsg({ type: 'error', text: error?.response?.data?.message || 'Đổi mật khẩu thất bại.' });
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -423,7 +458,7 @@ const UserDetail = ({ isOpen, onClose, user, onSave }) => {
         </form>
 
         {/* Footer / Actions */}
-        <div className="sticky bottom-0 bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
+        <div className="sticky bottom-0 bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3 flex-wrap">
           {isEditMode ? (
             <>
               <button
@@ -471,9 +506,75 @@ const UserDetail = ({ isOpen, onClose, user, onSave }) => {
                 <Edit2 className="h-4 w-4" />
                 Chỉnh Sửa
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPasswordForm((v) => !v);
+                  setResetPasswordMsg(null);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Đổi mật khẩu
+              </button>
             </>
           )}
         </div>
+        {/* Đổi mật khẩu form */}
+        {showPasswordForm && (
+          <div className="px-6 pb-6">
+            <form onSubmit={handleResetPassword} className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-2 space-y-3">
+              <div className="font-semibold text-blue-800 mb-2">Đổi mật khẩu cho người dùng</div>
+              <div>
+                <input
+                  type="password"
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Mật khẩu mới"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  disabled={isResettingPassword}
+                />
+              </div>
+              <div>
+                <input
+                  type="password"
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Xác nhận mật khẩu mới"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  disabled={isResettingPassword}
+                />
+              </div>
+              {resetPasswordMsg && (
+                <div className={`p-2 rounded text-sm ${resetPasswordMsg.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  {resetPasswordMsg.text}
+                </div>
+              )}
+              <div className="flex gap-2 mt-2">
+                <button
+                  type="submit"
+                  disabled={isResettingPassword}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+                >
+                  {isResettingPassword ? 'Đang đổi...' : 'Xác nhận'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordForm(false);
+                    setNewPassword('');
+                    setConfirmPassword('');
+                    setResetPasswordMsg(null);
+                  }}
+                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors font-medium"
+                  disabled={isResettingPassword}
+                >
+                  Hủy
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
     </>
   );

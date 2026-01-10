@@ -259,7 +259,7 @@ export function UserWatchListPage() {
                                     key={item.product_id || product.product_id} 
                                     className="overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full"
                                 >
-                                    {/* Image Section */}
+                                    {/* Image Section
                                     <div className="relative aspect-square bg-gray-100">
                                         <img
                                             src={product.image_url || product.images?.[0] || "/placeholder-image.jpg"}
@@ -279,7 +279,7 @@ export function UserWatchListPage() {
                                                 </span>
                                             </div>
                                         )}
-                                    </div>
+                                    </div> */}
 
                                     {/* Content Section */}
                                     <CardContent className="p-4 flex flex-col flex-grow">

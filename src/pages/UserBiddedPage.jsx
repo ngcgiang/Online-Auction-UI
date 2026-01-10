@@ -322,7 +322,7 @@ export function UserBiddedProductsPage() {
                                     }`}
                                 >
                                     {/* Image Section */}
-                                    <div className="relative aspect-square bg-gray-100">
+                                    {/* <div className="relative aspect-square bg-gray-100">
                                         <img
                                             src={product.image_url || product.images?.[0] || "/placeholder-image.jpg"}
                                             alt={product.product_name || "Product"}
@@ -338,7 +338,7 @@ export function UserBiddedProductsPage() {
                                                 </span>
                                             </div>
                                         )}
-                                    </div>
+                                    </div> */}
 
                                     {/* Content Section */}
                                     <CardContent className="p-4 flex flex-col flex-grow">
